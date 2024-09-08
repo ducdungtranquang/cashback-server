@@ -2,6 +2,7 @@ import express from 'express';
 import dotenv from 'dotenv';
 import connectDB from './config/db';
 import authRoutes from './routes/auth.routes';
+import userRoutes from './routes/user.route';
 import cartRoutes from './routes/cart.routes';
 import purchaseHistoryRoutes from './routes/purchaseHistory.routes';
 import passport from 'passport';
@@ -25,6 +26,7 @@ app.use(passport.initialize());
 app.use(passport.session());
 
 app.use('/api/auth', authRoutes);
+app.use('/api/user', userRoutes);
 app.use('/api/cart', cartRoutes);
 app.use('/api/purchase-history', purchaseHistoryRoutes);
 
