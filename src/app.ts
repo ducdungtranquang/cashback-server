@@ -7,12 +7,22 @@ import cartRoutes from './routes/cart.routes';
 import purchaseHistoryRoutes from './routes/purchaseHistory.routes';
 import passport from 'passport';
 import session from 'express-session';
+import cors from 'cors';
 import './config/passport';
 
 dotenv.config();
 connectDB();
 
 const app = express();
+
+// Cấu hình CORS
+const corsOptions = {
+    origin: 'http://localhost:3000',
+    methods: ['GET', 'POST', 'PUT', 'DELETE'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
+};
+
+app.use(cors(corsOptions));
 
 app.use(express.json());
 
