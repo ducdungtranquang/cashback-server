@@ -15,11 +15,11 @@ connectDB();
 
 const app = express();
 
-// Cấu hình CORS
 const corsOptions = {
     origin: 'http://localhost:3000',
     methods: ['GET', 'POST', 'PUT', 'DELETE'],
     allowedHeaders: ['Content-Type', 'Authorization'],
+    credentials: true,
 };
 
 app.use(cors(corsOptions));
