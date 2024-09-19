@@ -1,6 +1,22 @@
 import { Request, Response } from 'express';
 import User from '../models/user.model';
 import generateToken from '../ultils/generateToken';
+import jwt from 'jsonwebtoken';
+
+export const verifyToken = (req: Request, res: Response) => {
+    const token = req.body.token;
+
+    if (!token) {
+        return res.status(400).json({ valid: false, message: 'Token is required' });
+    }
+
+    try {
+        const decoded = jwt.verify(token, process.env.JWT_SECRET!);
+        return res.status(200).json({ valid: true, user: decoded });
+    } catch (error) {
+        return res.status(401).json({ valid: false, message: 'Invalid or expired token' });
+    }
+}
 
 export const registerUser = async (req: Request, res: Response) => {
     try {
