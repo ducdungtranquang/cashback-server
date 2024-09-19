@@ -24,10 +24,13 @@ router.get('/google/callback',
             res.cookie('id', user._id, {
                 path: '/',
             });
+            res.cookie('user_name', user.name, {
+                path: '/',
+            });
 
-            res.redirect('http://localhost:3000/profile'); // Đảm bảo URL này là chính xác
+            res.redirect('http://localhost:3000/profile');
         } else {
-            res.redirect('http://localhost:3000/login'); // Redirect về login nếu không có user
+            res.redirect('http://localhost:3000/login');
         }
     }
 );
