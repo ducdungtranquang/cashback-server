@@ -7,35 +7,42 @@ interface ICart extends Document {
     productLink: string;
     cashbackPercentage: number;
     quantity: number;
+    createdAt?: Date;
+    updatedAt?: Date;
 }
 
-const CartSchema = new Schema<ICart>({
-    userId: {
-        type: Schema.Types.ObjectId,
-        ref: 'User',
-        required: true,
+const CartSchema = new Schema<ICart>(
+    {
+        userId: {
+            type: Schema.Types.ObjectId,
+            ref: 'User',
+            required: true,
+        },
+        productName: {
+            type: String,
+            required: true,
+        },
+        price: {
+            type: Number,
+            required: true,
+        },
+        productLink: {
+            type: String,
+            required: true,
+        },
+        cashbackPercentage: {
+            type: Number,
+            required: true,
+        },
+        quantity: {
+            type: Number,
+            required: true,
+        },
     },
-    productName: {
-        type: String,
-        required: true,
-    },
-    price: {
-        type: Number,
-        required: true,
-    },
-    productLink: {
-        type: String,
-        required: true,
-    },
-    cashbackPercentage: {
-        type: Number,
-        required: true,
-    },
-    quantity: {
-        type: Number,
-        required: true,
-    },
-});
+    {
+        timestamps: true,
+    }
+);
 
 const Cart = model<ICart>('Cart', CartSchema);
 
