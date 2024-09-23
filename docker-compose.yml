@@ -1,0 +1,27 @@
+version: '3.4'
+
+services:
+  cashback-server:
+    build:
+      context: .
+      dockerfile: ./docker/node-service/Dockerfile
+    ports:
+      - "3000:3000"
+    volumes:
+      - .:/app
+    command: npm start
+    depends_on:
+      - redis
+
+  redis:
+    build:
+      context: .
+      dockerfile: ./docker/redis-service/Dockerfile
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    restart: always
+
+volumes:
+  redis_data:
