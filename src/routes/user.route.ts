@@ -1,12 +1,19 @@
-import { Router } from 'express';
-import { changePassword, forgotPassword, resetPassword, updateUserProfile } from '../controllers/user.controller';
-import { protect } from '../middleware/auth';
+import { Router } from "express";
+import {
+  changePassword,
+  forgotPassword,
+  getUserProfile,
+  resetPassword,
+  updateUserProfile,
+} from "../controllers/user.controller";
+import { protect } from "../middleware/auth";
 
 const router = Router();
 
-router.put('/profile', protect, updateUserProfile);
-router.put('/change-password', protect, changePassword);
-router.post('/forgot-password', forgotPassword);
-router.post('/reset-password', resetPassword);
+router.put("/profile", protect, updateUserProfile);
+router.put("/change-password", protect, changePassword);
+router.get("/", protect, getUserProfile);
+router.post("/forgot-password", forgotPassword);
+router.post("/reset-password", resetPassword);
 
 export default router;

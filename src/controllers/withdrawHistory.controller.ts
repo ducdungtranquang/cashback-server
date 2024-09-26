@@ -2,10 +2,10 @@ import { Request, Response } from "express";
 import WithdrawHistory from "../models/withdrawHistory.model";
 
 export const createWithdraw = async (req: Request, res: Response) => {
-  const { bank, money, accountBank } = req.body;
+  const { bank, money, accountBank, transId } = req.body;
 
   try {
-    if (!bank || !money || !accountBank) {
+    if (!bank || !money || !accountBank || !transId) {
       return res.status(400).json({ message: "Missing field" });
     }
 
@@ -14,9 +14,10 @@ export const createWithdraw = async (req: Request, res: Response) => {
       bank,
       money,
       accountBank,
+      transId,
     });
 
-    return res.status(201).json(withdrawHistory);
+    return res.status(200).json(withdrawHistory);
   } catch (error) {
     console.error(error);
     return res.status(500).json({ message: "Error" });

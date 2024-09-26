@@ -1,4 +1,3 @@
-import { timeStamp } from "console";
 import { Schema, model, Document } from "mongoose";
 
 interface IWithdrawHistory extends Document {
@@ -6,6 +5,7 @@ interface IWithdrawHistory extends Document {
   bank: string;
   money: number;
   accountBank: number;
+  transId: string;
   withdrawDate: Date;
 }
 
@@ -17,6 +17,10 @@ const WithdrawHistorySchema = new Schema<IWithdrawHistory>(
       required: true,
     },
     bank: {
+      type: String,
+      required: true,
+    },
+    transId: {
       type: String,
       required: true,
     },
@@ -36,9 +40,9 @@ const WithdrawHistorySchema = new Schema<IWithdrawHistory>(
   { timestamps: true }
 );
 
-const PurchaseHistory = model<IWithdrawHistory>(
-  "PurchaseHistory",
+const WithdrawHistory = model<IWithdrawHistory>(
+  "WithdrawHistory",
   WithdrawHistorySchema
 );
 
-export default PurchaseHistory;
+export default WithdrawHistory;
