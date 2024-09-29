@@ -2,7 +2,7 @@ import { Request, Response } from "express";
 import User from "../models/user.model";
 import generateToken from "../ultils/generateToken";
 import jwt from "jsonwebtoken";
-import BlacklistToken from "../models/blackList";
+import BlacklistToken from "../models/blackList.model";
 
 export const verifyToken = async (req: Request, res: Response) => {
   const token = req.body.token;

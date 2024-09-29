@@ -1,5 +1,6 @@
 import { Request, Response } from "express";
 import WithdrawHistory from "../models/withdrawHistory.model";
+import User from "../models/user.model";
 
 export const createWithdraw = async (req: Request, res: Response) => {
   const { bank, money, accountBank, transId } = req.body;
@@ -7,6 +8,16 @@ export const createWithdraw = async (req: Request, res: Response) => {
   try {
     if (!bank || !money || !accountBank || !transId) {
       return res.status(400).json({ message: "Missing field" });
+    }
+
+    if (!req?.user) {
+      return res.status(400).json({ message: "User not found" });
+    }
+
+    const user = await User.findById((req.user as any)._id);
+
+    if (user && (user as any)?.money <= 50000) {
+      return res.status(400).json({ message: "Not enough money to withdraw" });
     }
 
     const withdrawHistory = await WithdrawHistory.create({

@@ -1,7 +1,7 @@
 import cluster from "cluster";
 import os from "os";
 import cron from "node-cron";
-import BlacklistToken from "../models/blackList";
+import BlacklistToken from "../../models/blackList.model";
 
 const numCPUs = os.cpus().length;
 

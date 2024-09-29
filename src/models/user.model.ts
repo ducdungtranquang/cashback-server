@@ -1,5 +1,6 @@
 import mongoose, { Document, Schema } from "mongoose";
 import bcrypt from "bcryptjs";
+import { ITree, TreeSchema } from "./tree.model";
 
 export interface IUser extends Document {
   name: string;
@@ -11,6 +12,17 @@ export interface IUser extends Document {
   address?: string;
   city?: string;
   inviteCode?: string[];
+  money: number;
+  trees?: ITree[];
+  freeSpins?: number;
+  lastSpinDate?: Date;
+  spinToken?: string;
+  spinStartTime?: Date;
+  secretBoxesCollected?: number;
+  moneyByEvent: {
+    tree: number;
+    wheel: number;
+  };
   comparePassword?(candidatePassword: string): Promise<boolean>;
 }
 
@@ -25,6 +37,17 @@ const UserSchema: Schema = new Schema(
     address: { type: String },
     city: { type: String },
     inviteCode: { type: String },
+    money: { type: Number, default: 0 },
+    trees: [TreeSchema],
+    freeSpins: { type: Number, default: 1 },
+    lastSpinDate: { type: Date },
+    spinToken: { type: String, default: null },
+    spinStartTime: { type: Date },
+    secretBoxesCollected: { type: Number, default: 0 },
+    moneyByEvent: {
+      tree: { type: Number, default: 0 },
+      wheel: { type: Number, default: 0 },
+    },
   },
   {
     timestamps: true,
