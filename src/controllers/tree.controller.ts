@@ -74,7 +74,8 @@ export const waterTree = async (req: Request, res: Response) => {
 
     if (payForExtraWatering) {
       if (user.money < 100)
-        return res.status(400).json({
+        return res.status(200).json({
+          status: false,
           message: "Not enough funds to water more than once per day.",
         });
       user.money -= 100;
@@ -89,7 +90,10 @@ export const waterTree = async (req: Request, res: Response) => {
     }
 
     await user.save();
-    res.json({ message: "Tree watered successfully!" });
+    res.json({
+      status: true,
+      message: "Tree watered successfully!",
+    });
   } catch (error) {
     console.log(error, "Error");
   }
@@ -105,6 +109,7 @@ export const checkStatusTree = async (req: Request, res: Response) => {
     }
 
     const tree = user.trees[user.trees.length - 1];
+    const userCoin = user.money;
 
     const daysSinceLastWatering = Math.floor(
       (Date.now() - new Date(tree.lastWateredAt).getTime()) /
@@ -120,6 +125,7 @@ export const checkStatusTree = async (req: Request, res: Response) => {
     }
 
     res.json({
+      userCoin,
       tree,
       message: `Your tree has been watered ${tree.waterings} times. Water it ${
         7 - tree.waterings
