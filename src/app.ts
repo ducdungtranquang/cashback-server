@@ -6,6 +6,7 @@ import userRoutes from "./routes/user.route";
 import cartRoutes from "./routes/cart.routes";
 import withdrawRoutes from "./routes/withdraw.routes";
 import gardenRoutes from "./routes/tree.routes";
+import productRoutes from "./routes/product.routes";
 import purchaseHistoryRoutes from "./routes/purchaseHistory.routes";
 import passport from "passport";
 import session from "express-session";
@@ -52,6 +53,7 @@ app.use("/api/user", userRoutes);
 app.use("/api/cart", cartRoutes);
 app.use("/api/withdraw", withdrawRoutes);
 app.use("/api/garden", gardenRoutes);
+app.use("/api/product", productRoutes);
 app.use("/api/purchase-history", purchaseHistoryRoutes);
 
 export default app;
