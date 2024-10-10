@@ -9,8 +9,6 @@ export const savePurchaseHistory = async (req: Request, res: Response) => {
             return res.status(400).json({ message: 'Please provide all required fields.' });
         }
 
-        // console.log("-----", req);
-
         const purchaseHistory = await PurchaseHistory.create({
             userId: (req?.user as any)._id,
             productName,

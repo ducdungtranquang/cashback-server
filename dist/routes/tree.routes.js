@@ -1,0 +1,11 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+const express_1 = require("express");
+const auth_1 = require("../middleware/auth");
+const tree_controller_1 = require("../controllers/tree.controller");
+const router = (0, express_1.Router)();
+router.post("/plant", auth_1.protect, tree_controller_1.plantTree);
+router.post("/water", auth_1.protect, tree_controller_1.waterTree);
+router.get("/", auth_1.protect, tree_controller_1.checkStatusTree);
+router.post("/harvest-tree", auth_1.protect, tree_controller_1.harvestTree);
+exports.default = router;

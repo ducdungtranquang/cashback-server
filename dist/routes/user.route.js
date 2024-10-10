@@ -1,0 +1,15 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+const express_1 = require("express");
+const user_controller_1 = require("../controllers/user.controller");
+const auth_1 = require("../middleware/auth");
+const lucktyWheel_controller_1 = require("../controllers/lucktyWheel.controller");
+const router = (0, express_1.Router)();
+router.put("/profile", auth_1.protect, user_controller_1.updateUserProfile);
+router.put("/change-password", auth_1.protect, user_controller_1.changePassword);
+router.get("/", auth_1.protect, user_controller_1.getUserProfile);
+router.post("/forgot-password", user_controller_1.forgotPassword);
+router.post("/reset-password", user_controller_1.resetPassword);
+router.post("/spin", auth_1.protect, lucktyWheel_controller_1.startSpin);
+router.post("/prize", auth_1.protect, lucktyWheel_controller_1.claimPrize);
+exports.default = router;
