@@ -1,6 +1,7 @@
 import { Request, Response } from "express";
 import { google } from "googleapis";
 import { JWT } from "google-auth-library";
+import { removeHttps } from "../ultils/func";
 
 const PRIVATE_KEY = (process.env.GOOGLE_PRIVATE_KEY ||
   "GOOGLE_PRIVATE_KEY")!.replace(/\\n/g, "\n");
@@ -19,6 +20,13 @@ const parsePrice = (priceStr: string): number => {
   return parseFloat(priceRange[0].trim());
 };
 
+const authClient = new JWT({
+  email: CLIENT_EMAIL,
+  key: PRIVATE_KEY,
+  keyFile: "./google.json",
+  scopes: ["https://www.googleapis.com/auth/spreadsheets"],
+});
+
 export const getProducts = async (
   req: Request,
   res: Response
@@ -35,19 +43,11 @@ export const getProducts = async (
       : "";
     const sort = (req.query.sort as string) || "sales";
 
-    const authClient = new JWT({
-      email: CLIENT_EMAIL,
-      key: PRIVATE_KEY,
-      scopes: ["https://www.googleapis.com/auth/spreadsheets"],
-    });
-
     const sheets = google.sheets({ version: "v4", auth: authClient });
 
-    // Calculate startRow and endRow based on page and limit
     const startRow = (page - 1) * limit + 2; // Sheets are 1-indexed, not 0-indexed
     const endRow = startRow + limit - 1;
 
-    // Fetch the range of rows (adjust columns as per your data)
     const range = `${sheetName}!A${startRow}:G${endRow}`; // Adjust A:G to your actual data range
 
     const sheetResponse = await sheets.spreadsheets.values.get({
@@ -68,6 +68,7 @@ export const getProducts = async (
       const matchesProduct = productName?.includes(searchTerm);
       const matchesShop = shop?.includes(shopName || searchTerm);
 
+      if (shopName) return matchesProduct && matchesShop;
       return matchesProduct || matchesShop;
     });
 
@@ -96,7 +97,7 @@ export const getProducts = async (
       }
     };
 
-    if (sort === "price") {
+    if (sort === "price-asc") {
       result.sort(
         (a: any, b: any) => parsePrice(a["price"]) - parsePrice(b["price"])
       );
@@ -108,16 +109,57 @@ export const getProducts = async (
       result.sort(
         (a: any, b: any) => parseSales(b["sales"]) - parseSales(a["sales"])
       );
-    } else {
-      result.sort(
-        (a: any, b: any) => parseSales(a["sales"]) - parseSales(b["sales"])
-      );
     }
 
     res.json({
       currentPage: page,
       data: result,
     });
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+export const getProductById = async (req: Request, res: Response) => {
+  try {
+    const sheetName = (req.query.sheetName as string) || "Sheet1";
+    const productId = req.params.id; // Lấy id từ params
+
+    const sheets = google.sheets({ version: "v4", auth: authClient });
+
+    const range = `${sheetName}!A2:G`;
+
+    const sheetResponse = await sheets.spreadsheets.values.get({
+      spreadsheetId: SHEET_ID,
+      range: range,
+    });
+
+    if (!sheetResponse.data.values) {
+      throw new Error(`No data found in sheet "${sheetName}".`);
+    }
+
+    const rows = sheetResponse.data.values;
+
+    const product = rows.find((row: any) => {
+      const link = row[2]; 
+      return removeHttps(link) === productId;
+    });
+
+    if (!product) {
+      return res.status(404).json({ message: "Product not found" });
+    }
+
+    const result = {
+      name: product[0],
+      price: product[1],
+      link: product[2],
+      commission: product[3],
+      sales: product[4],
+      shop: product[5],
+      img: product[6],
+    };
+
+    return res.json(result);
   } catch (error: any) {
     res.status(500).json({ error: error.message });
   }
