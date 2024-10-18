@@ -65,7 +65,8 @@ export const waterTree = async (req: Request, res: Response) => {
 
     if (
       now.getTime() - tree.lastWateredAt.getTime() < oneDay &&
-      !payForExtraWatering
+      !payForExtraWatering &&
+      tree.waterings > 0
     ) {
       return res
         .status(400)
