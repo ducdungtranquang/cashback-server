@@ -141,7 +141,7 @@ export const getProductById = async (req: Request, res: Response) => {
     const rows = sheetResponse.data.values;
 
     const product = rows.find((row: any) => {
-      const link = row[2]; 
+      const link = row[2];
       return removeHttps(link) === productId;
     });
 
@@ -160,6 +160,54 @@ export const getProductById = async (req: Request, res: Response) => {
     };
 
     return res.json(result);
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+export const getShops = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const sheetName = (req.query.sheetName as string) || "Sheet1";
+    const page = parseInt(req.query.page as string) || 1;
+    const limit = parseInt(req.query.limit as string) || 20;
+    const searchTerm = req.query.searchTerm
+      ? removeDiacritics((req.query.searchTerm as string).toLowerCase()?.trim())
+      : "";
+
+    const sheets = google.sheets({ version: "v4", auth: authClient });
+
+    const range = `${sheetName}!F2:F`;
+
+    const sheetResponse = await sheets.spreadsheets.values.get({
+      spreadsheetId: SHEET_ID,
+      range: range,
+    });
+
+    if (!sheetResponse.data.values) {
+      throw new Error(`No data found in sheet "${sheetName}".`);
+    }
+
+    let shops = sheetResponse.data.values
+      .map((row: string[]) => removeDiacritics(row[0]?.toLowerCase()?.trim()))
+      .filter((shop: string | undefined) => shop)
+      .filter((value, index, self) => value && self.indexOf(value) === index);
+
+    if (searchTerm) {
+      shops = shops.filter((shop: string) => shop.includes(searchTerm));
+    }
+
+    const totalShops = shops.length;
+    const startIndex = (page - 1) * limit;
+    const endIndex = Math.min(startIndex + limit, totalShops);
+
+    const paginatedShops = shops.slice(startIndex, endIndex);
+
+    res.json({
+      currentPage: page,
+      totalPages: Math.ceil(totalShops / limit),
+      totalShops,
+      shops: paginatedShops,
+    });
   } catch (error: any) {
     res.status(500).json({ error: error.message });
   }
