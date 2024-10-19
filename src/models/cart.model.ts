@@ -3,7 +3,7 @@ import { Schema, model, Document } from "mongoose";
 interface ICart extends Document {
   userId: Schema.Types.ObjectId;
   productName: string;
-  price: number;
+  price: string;
   productLink: string;
   cashbackPercentage: number;
   quantity: number;
@@ -28,7 +28,7 @@ const CartSchema = new Schema<ICart>(
       required: true,
     },
     price: {
-      type: Number,
+      type: String,
       required: true,
     },
     productLink: {

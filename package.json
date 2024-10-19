@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
-    "build": "tsc", 
+    "build": "tsc",
     "start": "node dist/server.js",
     "dev": "nodemon src/server.ts",
     "test": "echo \"Error: no test specified\" && exit 1"
@@ -19,6 +19,9 @@
     "dotenv": "^16.4.5",
     "express": "^4.19.2",
     "express-session": "^1.18.0",
+    "google-auth-library": "^9.14.2",
+    "google-spreadsheet": "^4.1.4",
+    "googleapis": "^144.0.0",
     "jsonwebtoken": "^9.0.2",
     "mongoose": "^8.5.4",
     "node-cron": "^3.0.3",
@@ -34,6 +37,7 @@
     "@types/jsonwebtoken": "^9.0.6",
     "@types/node": "^22.5.1",
     "@types/node-cron": "^3.0.11",
+    "@types/node-fetch": "^2.6.11",
     "@types/nodemailer": "^6.4.15",
     "@types/passport-google-oauth20": "^2.0.16",
     "nodemon": "^3.1.4",
