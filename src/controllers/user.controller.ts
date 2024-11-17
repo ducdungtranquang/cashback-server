@@ -90,13 +90,10 @@ export const forgotPassword = async (req: Request, res: Response) => {
       return res.status(404).json({ message: "No user found with this email" });
     }
 
-    // Tạo token reset mật khẩu (hết hạn sau 1 giờ)
     const resetToken = jwt.sign({ id: user._id }, process.env.JWT_SECRET!, {
       expiresIn: "1h",
     });
 
-    console.log("resetToken", resetToken);
-    // Gửi email cho người dùng
     await sendResetPasswordEmail(user.email, resetToken);
 
     res.status(200).json({ message: "Reset password email sent" });
@@ -110,11 +107,8 @@ export const resetPassword = async (req: Request, res: Response) => {
   try {
     const { token, newPassword } = req.body;
 
-    console.log("tokennn", token);
-    // Giải mã token
     const decoded: any = jwt.verify(token, process.env.JWT_SECRET!);
 
-    // Tìm người dùng dựa vào ID từ token
     const user = await User.findById(decoded.id);
 
     if (!user) {
@@ -123,7 +117,6 @@ export const resetPassword = async (req: Request, res: Response) => {
         .json({ message: "Invalid token or user not found" });
     }
 
-    // Đặt lại mật khẩu
     user.password = newPassword;
     await user.save();
 

@@ -1,17 +1,17 @@
 import nodemailer from 'nodemailer';
 
+const transporter = nodemailer.createTransport({
+    host: "smtp.gmail.com",
+    port: 587,
+    secure: false,
+    auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS,
+    },
+});
+
+
 export const sendResetPasswordEmail = async (email: string, token: string) => {
-    const transporter = nodemailer.createTransport({
-        host: "smtp.gmail.com",
-        port: 587,
-        secure: false,
-        auth: {
-            user: "tranthideptrai@gmail.com",
-            pass: "kori dbhe nvhs emou",
-        },
-    });
-
-
     const resetUrl = `${process.env.RESET_URL}/${token}`;
 
     const message = `
@@ -27,3 +27,18 @@ export const sendResetPasswordEmail = async (email: string, token: string) => {
         html: message,
     });
 };
+
+const sendVerificationEmail = async (email: string, token: string) => {
+  const verificationUrl = `${process.env.VERIFY_URL}/${token}`;
+
+  const mailOptions = {
+    from: process.env.EMAIL_USER,
+    to: email,
+    subject: "Verify Your Email",
+    html: `<p>Click <a href="${verificationUrl}">here</a> to verify your email.</p>`,
+  };
+
+  await transporter.sendMail(mailOptions);
+};
+
+export default sendVerificationEmail;
