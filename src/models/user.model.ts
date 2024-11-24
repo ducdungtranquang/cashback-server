@@ -5,8 +5,10 @@ import { ITree, TreeSchema } from "./tree.model";
 export interface IUser extends Document {
   name: string;
   email: string;
+  age?:number;
   password?: string;
   accountBank?: string;
+  bankName?: string;
   googleId?: string;
   phoneNumber?: string;
   address?: string;
@@ -22,7 +24,7 @@ export interface IUser extends Document {
   isVerified?: boolean;
   verificationRequestsCount?:number;
   lastVerificationRequest?: Date;
-  moneyByEvent: {
+  moneyByEvent: {   
     tree: number;
     wheel: number;
   };
@@ -35,10 +37,12 @@ const UserSchema: Schema = new Schema(
     email: { type: String, required: true, unique: true },
     password: { type: String },
     accountBank: { type: String },
+    bankName: { type: String },
     googleId: { type: String },
     phoneNumber: { type: String },
     address: { type: String },
     city: { type: String },
+    age: { type: Number },
     inviteCode: { type: String },
     money: { type: Number, default: 0 },
     trees: [TreeSchema],

@@ -5,7 +5,9 @@ import { sendResetPasswordEmail } from "../ultils/sendEmail";
 
 export const getUserProfile = async (req: Request, res: Response) => {
   try {
-    const user = await User.findById((req.user as any)._id);
+    const user = await User.findById((req.user as any)._id).select(
+      "-password -verificationRequestsCount -lastVerificationRequest"
+    );
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
@@ -27,6 +29,7 @@ export const updateUserProfile = async (req: Request, res: Response) => {
     user.name = req.body.name || user.name;
     user.email = req.body.email || user.email;
     user.accountBank = req.body.accountBank || user.accountBank;
+    user.bankName = req.body.bankName || user.bankName;
     user.phoneNumber = req.body.phoneNumber || user.phoneNumber;
     user.address = req.body.address || user.address;
     user.city = req.body.city || user.city;
@@ -39,6 +42,7 @@ export const updateUserProfile = async (req: Request, res: Response) => {
       name: updatedUser.name,
       email: updatedUser.email,
       accountBank: updatedUser.accountBank,
+      bankName: updatedUser.bankName,
       phoneNumber: updatedUser.phoneNumber,
       address: updatedUser.address,
       city: updatedUser.city,
