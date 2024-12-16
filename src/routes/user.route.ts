@@ -1,9 +1,13 @@
 import { Router } from "express";
 import {
   changePassword,
+  createUser,
+  deleteUser,
   forgotPassword,
+  getAllUserProfile,
   getUserProfile,
   resetPassword,
+  updateUser,
   updateUserProfile,
 } from "../controllers/user.controller";
 import { protect } from "../middleware/auth";
@@ -18,5 +22,9 @@ router.post("/forgot-password", forgotPassword);
 router.post("/reset-password", resetPassword);
 router.post("/spin", protect, startSpin);
 router.post("/prize", protect, claimPrize);
+router.post("/admin-cretae-users", protect, createUser);
+router.put("/admin-update-users/:userId", protect, updateUser);
+router.delete("/admin-del-users/:userId", protect, deleteUser);
+router.get("/admin-all-user", protect, getAllUserProfile);
 
 export default router;

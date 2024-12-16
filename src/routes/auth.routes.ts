@@ -43,6 +43,15 @@ router.get(
         path: "/",
       });
 
+      // Populate data to chat app
+      const data = {
+        user: user.name,
+        password: "password",
+        email: user.email,
+        isAvatarImageSet: true,
+        avatarImage: `https://api.multiavatar.com/${Math.round(Math.random() * 1000)}`
+      }
+
       res.redirect("http://localhost:3000/profile");
     } else {
       res.redirect("http://localhost:3000/login");

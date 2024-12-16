@@ -59,3 +59,88 @@ export const verifyWithdraw = async (req: Request, res: Response) => {
     res.status(500).json({ message: "Lỗi hệ thống", error });
   }
 };
+
+export const getAllWithdrawRequests = async (req: Request, res: Response) => {
+  try {
+    const currentUser = await User.findById((req.user as any)._id).select(
+      "role"
+    );
+
+    if (!currentUser) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    if (currentUser.role === 0) {
+      return res.status(403).json({ message: "Permission denied" });
+    }
+
+    const { search } = req.query;
+
+    let filter: any = {};
+    if (search) {
+      const users = await User.find({
+        $or: [
+          { email: { $regex: search, $options: "i" } },
+          { phone: { $regex: search, $options: "i" } },
+          { bankAccount: { $regex: search, $options: "i" } },
+        ],
+      }).select("_id");
+
+      const userIds = users.map((user) => user._id);
+      filter.userId = { $in: userIds };
+    }
+
+    const withdrawRequests = await WithdrawRequest.find(filter)
+      .populate("userId", "name email phone bankAccount")
+      .sort({ createdAt: -1 });
+
+    res.status(200).json(withdrawRequests);
+  } catch (error) {
+    console.error("Error getting withdraw requests:", error);
+    res.status(500).json({ message: "Server error, please try again later." });
+  }
+};
+
+export const approveWithdrawRequest = async (req: Request, res: Response) => {
+  try {
+    const { requestId } = req.params;
+    const { status } = req.body;
+
+    const currentUser = await User.findById((req.user as any)._id).select(
+      "role"
+    );
+    if (!currentUser) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    if (currentUser.role === 0) {
+      return res.status(403).json({ message: "Permission denied" });
+    }
+
+    if (!["approved", "rejected"].includes(status)) {
+      return res.status(400).json({ message: "Invalid status" });
+    }
+
+    const withdrawRequest = await WithdrawRequest.findById(requestId);
+    if (!withdrawRequest) {
+      return res.status(404).json({ message: "Withdraw request not found" });
+    }
+
+    if (withdrawRequest.status !== "pending") {
+      return res.status(400).json({
+        message: `Cannot update withdraw request with status "${withdrawRequest.status}"`,
+      });
+    }
+
+    withdrawRequest.status = status;
+    await withdrawRequest.save();
+
+    res.status(200).json({
+      message: `Withdraw request has been ${status} successfully`,
+      withdrawRequest,
+    });
+  } catch (error) {
+    console.error("Error approving withdraw request:", error);
+    res.status(500).json({ message: "Server error, please try again later." });
+  }
+};

@@ -5,7 +5,7 @@ import { ITree, TreeSchema } from "./tree.model";
 export interface IUser extends Document {
   name: string;
   email: string;
-  age?:number;
+  age?: number;
   password?: string;
   accountBank?: string;
   bankName?: string;
@@ -13,6 +13,7 @@ export interface IUser extends Document {
   phoneNumber?: string;
   address?: string;
   city?: string;
+  image?: string;
   inviteCode?: string[];
   money: number;
   trees?: ITree[];
@@ -22,9 +23,10 @@ export interface IUser extends Document {
   spinStartTime?: Date;
   secretBoxesCollected?: number;
   isVerified?: boolean;
-  verificationRequestsCount?:number;
+  verificationRequestsCount?: number;
   lastVerificationRequest?: Date;
-  moneyByEvent: {   
+  role?: number;
+  moneyByEvent: {
     tree: number;
     wheel: number;
   };
@@ -44,6 +46,7 @@ const UserSchema: Schema = new Schema(
     city: { type: String },
     age: { type: Number },
     inviteCode: { type: String },
+    image: { type: String, default: null },
     money: { type: Number, default: 0 },
     trees: [TreeSchema],
     freeSpins: { type: Number, default: 1 },
@@ -63,6 +66,10 @@ const UserSchema: Schema = new Schema(
     lastVerificationRequest: {
       type: Date,
       default: null,
+    },
+    role: {
+      type: Number,
+      default: 0,
     },
   },
   {
