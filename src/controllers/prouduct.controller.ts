@@ -1,6 +1,7 @@
 import { Request, Response } from "express";
 import { google } from "googleapis";
 import { JWT } from "google-auth-library";
+import User from "../models/user.model";
 import { removeHttps } from "../ultils/func";
 
 const PRIVATE_KEY = (process.env.GOOGLE_PRIVATE_KEY ||
@@ -235,3 +236,51 @@ export const getShops = async (req: Request, res: Response): Promise<void> => {
     res.status(500).json({ error: error.message });
   }
 };
+
+export const getCounts = async (req: Request, res: Response): Promise<any> => {
+  try {
+    // Kiểm tra quyền
+    if (!req.user || (req.user as any).role <= 0) {
+      return res.status(403).json({ error: "Forbidden: Insufficient role" });
+    }
+
+    const sheetName = (req.query.sheetName as string) || "Sheet1";
+
+    const sheets = google.sheets({ version: "v4", auth: authClient });
+
+    const range = `${sheetName}!A2:G`; // Toàn bộ dữ liệu từ hàng 2 đến cột G
+
+    const sheetResponse = await sheets.spreadsheets.values.get({
+      spreadsheetId: SHEET_ID,
+      range: range,
+    });
+
+    if (!sheetResponse.data.values) {
+      throw new Error(`No data found in sheet "${sheetName}".`);
+    }
+
+    const rows = sheetResponse.data.values;
+
+    const productCount = rows.length;
+
+    const userCount = await User.countDocuments({})
+
+    const shopSet = new Set<string>();
+    rows.forEach((row: any) => {
+      const shopName = removeDiacritics(row[5]?.toLowerCase()?.trim());
+      if (shopName) {
+        shopSet.add(shopName);
+      }
+    });
+
+    const shopCount = shopSet.size;
+
+    res.json({
+      productCount,
+      shopCount,
+    });
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+};
+

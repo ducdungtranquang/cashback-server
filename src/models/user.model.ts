@@ -41,7 +41,7 @@ const UserSchema: Schema = new Schema(
     accountBank: { type: String },
     bankName: { type: String },
     googleId: { type: String },
-    phoneNumber: { type: String },
+    phoneNumber: { type: String, unique: true },
     address: { type: String },
     city: { type: String },
     age: { type: Number },

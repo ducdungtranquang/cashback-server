@@ -12,10 +12,15 @@ export const requestWithdraw = async (req: Request, res: Response) => {
 
     if (!user) return res.status(404).json({ message: "User not found" });
 
-    if (user.money < 50000)
+    if (user.money < 50000) {
       return res
         .status(400)
         .json({ message: "Số dư không đủ để thực hiện yêu cầu rút tiền" });
+    }
+
+    if (user.money < Number(amount)) {
+      return res.status(400).json({ message: "Yêu cầu không hợp lệ" });
+    }
 
     const verificationCode = getRandomInt(1000000).toString();
     const expiresAt = new Date(Date.now() + 60 * 1000);
@@ -45,6 +50,11 @@ export const verifyWithdraw = async (req: Request, res: Response) => {
       status: "pending",
     });
 
+    const user = await User.findById(userId);
+
+    if (!user)
+      return res.status(404).json({ message: "Yêu cầu không tồn tại" });
+
     if (!request)
       return res.status(404).json({ message: "Yêu cầu không tồn tại" });
 
@@ -53,6 +63,10 @@ export const verifyWithdraw = async (req: Request, res: Response) => {
 
     request.status = "approved";
     await request.save();
+    await User.updateOne(
+      { _id: userId },
+      { money: Number(user.money) - Number(request.amount) }
+    );
 
     res.json({ message: "Xác thực thành công, yêu cầu đang chờ duyệt" });
   } catch (error) {
@@ -106,9 +120,7 @@ export const approveWithdrawRequest = async (req: Request, res: Response) => {
     const { requestId } = req.params;
     const { status } = req.body;
 
-    const currentUser = await User.findById((req.user as any)._id).select(
-      "role"
-    );
+    const currentUser = await User.findById((req.user as any)._id);
     if (!currentUser) {
       return res.status(404).json({ message: "User not found" });
     }
@@ -134,6 +146,10 @@ export const approveWithdrawRequest = async (req: Request, res: Response) => {
 
     withdrawRequest.status = status;
     await withdrawRequest.save();
+
+    if (status === "rejected") {
+      currentUser.money = currentUser.money + withdrawRequest.amount;
+    }
 
     res.status(200).json({
       message: `Withdraw request has been ${status} successfully`,
