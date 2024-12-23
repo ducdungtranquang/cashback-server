@@ -26,6 +26,7 @@ export interface IUser extends Document {
   verificationRequestsCount?: number;
   lastVerificationRequest?: Date;
   role?: number;
+  total: number;
   moneyByEvent: {
     tree: number;
     wheel: number;
@@ -48,6 +49,7 @@ const UserSchema: Schema = new Schema(
     inviteCode: { type: String },
     image: { type: String, default: null },
     money: { type: Number, default: 0 },
+    total: { type: Number, default: 0 },
     trees: [TreeSchema],
     freeSpins: { type: Number, default: 1 },
     lastSpinDate: { type: Date },

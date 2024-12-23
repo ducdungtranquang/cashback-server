@@ -4,6 +4,7 @@ const WithdrawRequestSchema = new Schema(
   {
     userId: { type: Schema.Types.ObjectId, ref: "User", required: true },
     amount: { type: Number, required: true },
+    isVerify: {type: Boolean, default: false},
     status: {
       type: String,
       enum: ["pending", "approved", "rejected"],

@@ -239,7 +239,6 @@ export const getShops = async (req: Request, res: Response): Promise<void> => {
 
 export const getCounts = async (req: Request, res: Response): Promise<any> => {
   try {
-    // Kiểm tra quyền
     if (!req.user || (req.user as any).role <= 0) {
       return res.status(403).json({ error: "Forbidden: Insufficient role" });
     }
@@ -248,7 +247,7 @@ export const getCounts = async (req: Request, res: Response): Promise<any> => {
 
     const sheets = google.sheets({ version: "v4", auth: authClient });
 
-    const range = `${sheetName}!A2:G`; // Toàn bộ dữ liệu từ hàng 2 đến cột G
+    const range = `${sheetName}!A2:G`;
 
     const sheetResponse = await sheets.spreadsheets.values.get({
       spreadsheetId: SHEET_ID,
@@ -278,6 +277,7 @@ export const getCounts = async (req: Request, res: Response): Promise<any> => {
     res.json({
       productCount,
       shopCount,
+      userCount
     });
   } catch (error: any) {
     res.status(500).json({ error: error.message });

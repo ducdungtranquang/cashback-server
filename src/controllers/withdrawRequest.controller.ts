@@ -30,6 +30,8 @@ export const requestWithdraw = async (req: Request, res: Response) => {
       amount,
       verificationCode,
       expiresAt,
+      status: "pending",
+      isVerify: false,
     });
 
     await sendEmailWithdrawRequest(user.email, verificationCode);
@@ -47,7 +49,6 @@ export const verifyWithdraw = async (req: Request, res: Response) => {
     const request = await WithdrawRequest.findOne({
       userId,
       verificationCode,
-      status: "pending",
     });
 
     const user = await User.findById(userId);
@@ -61,14 +62,17 @@ export const verifyWithdraw = async (req: Request, res: Response) => {
     if (new Date() > request.expiresAt)
       return res.status(400).json({ message: "Mã xác thực đã hết hạn" });
 
-    request.status = "approved";
+    request.isVerify = true;
     await request.save();
     await User.updateOne(
       { _id: userId },
       { money: Number(user.money) - Number(request.amount) }
     );
 
-    res.json({ message: "Xác thực thành công, yêu cầu đang chờ duyệt" });
+    res.json({
+      message: "Xác thực thành công, yêu cầu đang chờ duyệt",
+      status: "success",
+    });
   } catch (error) {
     res.status(500).json({ message: "Lỗi hệ thống", error });
   }
@@ -138,6 +142,12 @@ export const approveWithdrawRequest = async (req: Request, res: Response) => {
       return res.status(404).json({ message: "Withdraw request not found" });
     }
 
+    if (!withdrawRequest.isVerify) {
+      return res.status(400).json({
+        message: `Cannot update withdraw request"`,
+      });
+    }
+
     if (withdrawRequest.status !== "pending") {
       return res.status(400).json({
         message: `Cannot update withdraw request with status "${withdrawRequest.status}"`,
@@ -149,6 +159,9 @@ export const approveWithdrawRequest = async (req: Request, res: Response) => {
 
     if (status === "rejected") {
       currentUser.money = currentUser.money + withdrawRequest.amount;
+    }
+    if (status === "approved") {
+      currentUser.total = Number(withdrawRequest.amount);
     }
 
     res.status(200).json({
