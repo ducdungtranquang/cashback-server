@@ -16,7 +16,6 @@ export const addToCart = async (req: Request, res: Response) => {
       !productName ||
       !price ||
       !productLink ||
-      !cashbackPercentage ||
       !quantity ||
       !productId
     ) {

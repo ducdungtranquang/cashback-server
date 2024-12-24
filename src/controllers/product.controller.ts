@@ -1,6 +1,7 @@
 import { Request, Response } from "express";
 import { google } from "googleapis";
 import { JWT } from "google-auth-library";
+import User from "../models/user.model";
 import { removeHttps } from "../ultils/func";
 
 const PRIVATE_KEY = (process.env.GOOGLE_PRIVATE_KEY ||
@@ -176,7 +177,7 @@ export const getShops = async (req: Request, res: Response): Promise<void> => {
 
     const sheets = google.sheets({ version: "v4", auth: authClient });
 
-    const range = `${sheetName}!F2:F`;
+    const range = `${sheetName}!A2:G`;
 
     const sheetResponse = await sheets.spreadsheets.values.get({
       spreadsheetId: SHEET_ID,
@@ -187,14 +188,37 @@ export const getShops = async (req: Request, res: Response): Promise<void> => {
       throw new Error(`No data found in sheet "${sheetName}".`);
     }
 
-    let shops = sheetResponse.data.values
-      .map((row: string[]) => removeDiacritics(row[0]?.toLowerCase()?.trim()))
-      .filter((shop: string | undefined) => shop)
-      .filter((value, index, self) => value && self.indexOf(value) === index);
+    const rows = sheetResponse.data.values;
 
-    if (searchTerm) {
-      shops = shops.filter((shop: string) => shop.includes(searchTerm));
-    }
+    const shopData = rows.reduce((acc: any, row: any) => {
+      const shop = removeDiacritics(row[5]?.toLowerCase()?.trim()); 
+      const product = {
+        name: row[0],
+        commission: parseFloat(row[3]) + 1, 
+        img: row[6], 
+      };
+
+      if (shop) {
+        if (!acc[shop]) {
+          acc[shop] = [];
+        }
+        acc[shop].push(product);
+      }
+
+      return acc;
+    }, {});
+
+    let shops = Object.keys(shopData)
+      .filter((shop) => shop.includes(searchTerm))
+      .map((shop) => {
+        const products = shopData[shop];
+        const firstProduct = products[0]; 
+        return {
+          shop: shop,
+          firstProductImg: firstProduct?.img || "",
+          firstProductCommission: firstProduct?.commission || 0,
+        };
+      });
 
     const totalShops = shops.length;
     const startIndex = (page - 1) * limit;
@@ -212,3 +236,51 @@ export const getShops = async (req: Request, res: Response): Promise<void> => {
     res.status(500).json({ error: error.message });
   }
 };
+
+export const getCounts = async (req: Request, res: Response): Promise<any> => {
+  try {
+    if (!req.user || (req.user as any).role <= 0) {
+      return res.status(403).json({ error: "Forbidden: Insufficient role" });
+    }
+
+    const sheetName = (req.query.sheetName as string) || "Sheet1";
+
+    const sheets = google.sheets({ version: "v4", auth: authClient });
+
+    const range = `${sheetName}!A2:G`;
+
+    const sheetResponse = await sheets.spreadsheets.values.get({
+      spreadsheetId: SHEET_ID,
+      range: range,
+    });
+
+    if (!sheetResponse.data.values) {
+      throw new Error(`No data found in sheet "${sheetName}".`);
+    }
+
+    const rows = sheetResponse.data.values;
+
+    const productCount = rows.length;
+
+    const userCount = await User.countDocuments({})
+
+    const shopSet = new Set<string>();
+    rows.forEach((row: any) => {
+      const shopName = removeDiacritics(row[5]?.toLowerCase()?.trim());
+      if (shopName) {
+        shopSet.add(shopName);
+      }
+    });
+
+    const shopCount = shopSet.size;
+
+    res.json({
+      productCount,
+      shopCount,
+      userCount
+    });
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+};
+

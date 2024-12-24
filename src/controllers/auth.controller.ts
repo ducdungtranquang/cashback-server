@@ -3,6 +3,7 @@ import User from "../models/user.model";
 import generateToken from "../ultils/generateToken";
 import jwt from "jsonwebtoken";
 import BlacklistToken from "../models/blackList.model";
+import { sendVerificationEmail } from "../ultils/sendEmail";
 
 export const verifyToken = async (req: Request, res: Response) => {
   const token = req.body.token;
@@ -38,7 +39,6 @@ export const registerUser = async (req: Request, res: Response) => {
     }
 
     const userExists = await User.findOne({ email });
-
     if (userExists) {
       return res.status(400).json({ message: "User already exists" });
     }
@@ -48,15 +48,21 @@ export const registerUser = async (req: Request, res: Response) => {
       password,
       name,
       accountBank,
+      isVerified: false,
     });
 
     if (user) {
+      const verificationToken = jwt.sign(
+        { userId: user._id },
+        process.env.JWT_SECRET!,
+        { expiresIn: "1d" }
+      );
+
+      await sendVerificationEmail(email, verificationToken);
+
       res.status(201).json({
-        _id: user._id,
-        email: user.email,
-        name: user.name,
-        accountBank: user.accountBank,
-        token: generateToken(user._id as string),
+        success: true,
+        message: "User registered. Please verify your email to log in.",
       });
     } else {
       res.status(400).json({ message: "Invalid user data" });
@@ -80,6 +86,12 @@ export const authUser = async (req: Request, res: Response) => {
     const user = await User.findOne({ email });
 
     if (user && (await user.comparePassword!(password))) {
+      if (!user.isVerified) {
+        return res
+          .status(401)
+          .json({ message: "Please verify your email first." });
+      }
+
       res.json({
         _id: user._id,
         email: user.email,
@@ -114,5 +126,83 @@ export const logout = async (req: Request, res: Response) => {
     res.status(200).json({ success: true, message: "Token revoked" });
   } catch (error) {
     res.status(500).json({ success: false, message: "Error revoking token" });
+  }
+};
+
+export const verifyEmailToken = async (req: Request, res: Response) => {
+  const { token } = req.body;
+
+  if (!token) {
+    return res.status(400).json({ message: "Verification token is required." });
+  }
+
+  try {
+    const decoded: any = jwt.verify(token as string, process.env.JWT_SECRET!);
+
+    const user = await User.findById(decoded.userId);
+    if (!user) {
+      return res.status(400).json({ message: "Invalid verification token." });
+    }
+
+    if (user.isVerified) {
+      return res.status(400).json({ message: "User already registered" });
+    }
+
+    user.isVerified = true;
+    await user.save();
+
+    res.status(201).json({
+      _id: user._id,
+      email: user.email,
+      name: user.name,
+      accountBank: user.accountBank,
+      token: generateToken(user._id as string),
+    });
+  } catch (error) {
+    res.status(400).json({ message: "Invalid or expired token." });
+  }
+};
+
+export const resendVerificationCode = async (req: Request, res: Response) => {
+  try {
+    const { email } = req.body;
+
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    const now = new Date();
+    const isSameDay =
+      user.lastVerificationRequest &&
+      now.toDateString() ===
+        new Date(user.lastVerificationRequest).toDateString();
+
+    if (isSameDay && user?.verificationRequestsCount! >= 2) {
+      return res
+        .status(429)
+        .json({ message: "Daily limit reached for verification emails." });
+    }
+
+    if (!isSameDay) {
+      user.verificationRequestsCount = 0;
+    }
+
+    const verificationToken = jwt.sign(
+      { userId: user._id },
+      process.env.JWT_SECRET!,
+      { expiresIn: "1d" }
+    );
+
+    await sendVerificationEmail(email, verificationToken);
+
+    user.verificationRequestsCount! += 1;
+    user.lastVerificationRequest = now;
+    await user.save();
+
+    res.status(200).json({ message: "Verification code resent successfully." });
+  } catch (error) {
+    console.error("Error resending verification code:", error);
+    res.status(500).json({ message: "Server error, please try again later." });
   }
 };

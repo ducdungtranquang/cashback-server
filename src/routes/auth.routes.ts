@@ -5,6 +5,8 @@ import {
   authUser,
   verifyToken,
   logout,
+  verifyEmailToken,
+  resendVerificationCode,
 } from "../controllers/auth.controller";
 
 const router = Router();
@@ -13,6 +15,8 @@ router.post("/register", registerUser);
 router.post("/login", authUser);
 router.post("/logout", logout);
 router.post("/verify-token", verifyToken);
+router.post("/verify-account", verifyEmailToken);
+router.post("/resend-verify", resendVerificationCode);
 
 router.get(
   "/google",
@@ -38,6 +42,15 @@ router.get(
       res.cookie("user_name", user.name, {
         path: "/",
       });
+
+      // Populate data to chat app
+      const data = {
+        user: user.name,
+        password: "password",
+        email: user.email,
+        isAvatarImageSet: true,
+        avatarImage: `https://api.multiavatar.com/${Math.round(Math.random() * 1000)}`
+      }
 
       res.redirect("http://localhost:3000/profile");
     } else {

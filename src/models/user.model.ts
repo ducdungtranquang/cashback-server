@@ -5,12 +5,15 @@ import { ITree, TreeSchema } from "./tree.model";
 export interface IUser extends Document {
   name: string;
   email: string;
+  age?: number;
   password?: string;
   accountBank?: string;
+  bankName?: string;
   googleId?: string;
   phoneNumber?: string;
   address?: string;
   city?: string;
+  image?: string;
   inviteCode?: string[];
   money: number;
   trees?: ITree[];
@@ -19,6 +22,11 @@ export interface IUser extends Document {
   spinToken?: string;
   spinStartTime?: Date;
   secretBoxesCollected?: number;
+  isVerified?: boolean;
+  verificationRequestsCount?: number;
+  lastVerificationRequest?: Date;
+  role?: number;
+  total: number;
   moneyByEvent: {
     tree: number;
     wheel: number;
@@ -32,12 +40,16 @@ const UserSchema: Schema = new Schema(
     email: { type: String, required: true, unique: true },
     password: { type: String },
     accountBank: { type: String },
+    bankName: { type: String },
     googleId: { type: String },
-    phoneNumber: { type: String },
+    phoneNumber: { type: String, unique: true },
     address: { type: String },
     city: { type: String },
+    age: { type: Number },
     inviteCode: { type: String },
+    image: { type: String, default: null },
     money: { type: Number, default: 0 },
+    total: { type: Number, default: 0 },
     trees: [TreeSchema],
     freeSpins: { type: Number, default: 1 },
     lastSpinDate: { type: Date },
@@ -47,6 +59,19 @@ const UserSchema: Schema = new Schema(
     moneyByEvent: {
       tree: { type: Number, default: 0 },
       wheel: { type: Number, default: 0 },
+    },
+    isVerified: { type: Boolean, default: false },
+    verificationRequestsCount: {
+      type: Number,
+      default: 0,
+    },
+    lastVerificationRequest: {
+      type: Date,
+      default: null,
+    },
+    role: {
+      type: Number,
+      default: 0,
     },
   },
   {
