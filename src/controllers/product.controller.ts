@@ -33,7 +33,7 @@ export const getProducts = async (
   res: Response
 ): Promise<void> => {
   try {
-    const sheetName = (req.query.sheetName as string) || "Sheet1";
+    const sheetName = (req.query.sheetName as string) || "All";
     const page = parseInt(req.query.page as string) || 1;
     const limit = parseInt(req.query.limit as string) || 20;
     const searchTerm = req.query.searchTerm
@@ -123,8 +123,8 @@ export const getProducts = async (
 
 export const getProductById = async (req: Request, res: Response) => {
   try {
-    const sheetName = (req.query.sheetName as string) || "Sheet1";
-    const productId = req.params.id; // Lấy id từ params
+    const sheetName = (req.query.sheetName as string) || "All";
+    const productId = req.params.id;
 
     const sheets = google.sheets({ version: "v4", auth: authClient });
 
@@ -168,7 +168,7 @@ export const getProductById = async (req: Request, res: Response) => {
 
 export const getShops = async (req: Request, res: Response): Promise<void> => {
   try {
-    const sheetName = (req.query.sheetName as string) || "Sheet1";
+    const sheetName = (req.query.sheetName as string) || "All";
     const page = parseInt(req.query.page as string) || 1;
     const limit = parseInt(req.query.limit as string) || 20;
     const searchTerm = req.query.searchTerm
@@ -191,11 +191,11 @@ export const getShops = async (req: Request, res: Response): Promise<void> => {
     const rows = sheetResponse.data.values;
 
     const shopData = rows.reduce((acc: any, row: any) => {
-      const shop = removeDiacritics(row[5]?.toLowerCase()?.trim()); 
+      const shop = removeDiacritics(row[5]?.toLowerCase()?.trim());
       const product = {
         name: row[0],
-        commission: parseFloat(row[3]) + 1, 
-        img: row[6], 
+        commission: parseFloat(row[3]) + 1,
+        img: row[6],
       };
 
       if (shop) {
@@ -212,7 +212,7 @@ export const getShops = async (req: Request, res: Response): Promise<void> => {
       .filter((shop) => shop.includes(searchTerm))
       .map((shop) => {
         const products = shopData[shop];
-        const firstProduct = products[0]; 
+        const firstProduct = products[0];
         return {
           shop: shop,
           firstProductImg: firstProduct?.img || "",
@@ -243,7 +243,7 @@ export const getCounts = async (req: Request, res: Response): Promise<any> => {
       return res.status(403).json({ error: "Forbidden: Insufficient role" });
     }
 
-    const sheetName = (req.query.sheetName as string) || "Sheet1";
+    const sheetName = (req.query.sheetName as string) || "All";
 
     const sheets = google.sheets({ version: "v4", auth: authClient });
 
@@ -262,7 +262,7 @@ export const getCounts = async (req: Request, res: Response): Promise<any> => {
 
     const productCount = rows.length;
 
-    const userCount = await User.countDocuments({})
+    const userCount = await User.countDocuments({});
 
     const shopSet = new Set<string>();
     rows.forEach((row: any) => {
@@ -277,25 +277,25 @@ export const getCounts = async (req: Request, res: Response): Promise<any> => {
     res.json({
       productCount,
       shopCount,
-      userCount
+      userCount,
     });
   } catch (error: any) {
     res.status(500).json({ error: error.message });
   }
 };
 
-const sheets = google.sheets({ version: "v4", auth: authClient })
+const sheets = google.sheets({ version: "v4", auth: authClient });
 
 export const addProduct = async (req: Request, res: Response) => {
   try {
-    const sheetName = (req.body.sheetName as string) || "Sheet1";
+    const sheetName = (req.body.sheetName as string) || "All";
     const product = req.body;
 
     if (!product.name || !product.price || !product.link) {
       return res.status(400).json({ message: "Missing required fields" });
     }
 
-    const range = `${sheetName}!A:G`; // Chèn dữ liệu vào cột A đến G
+    const range = `${sheetName}!A:G`;
 
     await sheets.spreadsheets.values.append({
       spreadsheetId: SHEET_ID,
@@ -322,14 +322,13 @@ export const addProduct = async (req: Request, res: Response) => {
   }
 };
 
-// Sửa sản phẩm
 export const updateProduct = async (req: Request, res: Response) => {
   try {
-    const sheetName = (req.body.sheetName as string) || "Sheet1";
+    const sheetName = (req.body.sheetName as string) || "All";
     const productId = req.params.id;
     const updatedData = req.body;
 
-    const range = `${sheetName}!A2:G`; // Dữ liệu bắt đầu từ dòng 2
+    const range = `${sheetName}!A2:G`;
     const sheetResponse = await sheets.spreadsheets.values.get({
       spreadsheetId: SHEET_ID,
       range,
@@ -340,8 +339,8 @@ export const updateProduct = async (req: Request, res: Response) => {
     }
 
     const rows = sheetResponse.data.values;
-    const rowIndex = rows.findIndex((row: any) =>
-      removeHttps(row[2]) === productId
+    const rowIndex = rows.findIndex(
+      (row: any) => removeHttps(row[2]) === productId
     );
 
     if (rowIndex === -1) {
@@ -373,13 +372,12 @@ export const updateProduct = async (req: Request, res: Response) => {
   }
 };
 
-// Xóa sản phẩm
 export const deleteProduct = async (req: Request, res: Response) => {
   try {
-    const sheetName = (req.query.sheetName as string) || "Sheet1";
+    const sheetName = (req.query.sheetName as string) || "All";
     const productId = req.params.id;
 
-    const range = `${sheetName}!A2:G`; // Dữ liệu bắt đầu từ dòng 2
+    const range = `${sheetName}!A2:G`;
     const sheetResponse = await sheets.spreadsheets.values.get({
       spreadsheetId: SHEET_ID,
       range,
@@ -390,26 +388,27 @@ export const deleteProduct = async (req: Request, res: Response) => {
     }
 
     const rows = sheetResponse.data.values;
-    const rowIndex = rows.findIndex((row: any) =>
-      removeHttps(row[2]) === productId
+    const rowIndex = rows.findIndex(
+      (row: any) => removeHttps(row[2]) === productId
     );
 
     if (rowIndex === -1) {
       return res.status(404).json({ message: "Product not found" });
     }
 
-    rows.splice(rowIndex, 1);
+    const emptyRow = ["", "", "", "", "", "", ""]; 
+    rows[rowIndex] = emptyRow;
 
     await sheets.spreadsheets.values.update({
       spreadsheetId: SHEET_ID,
-      range: `${sheetName}!A2:G`,
+      range,
       valueInputOption: "USER_ENTERED",
       requestBody: { values: rows },
     });
 
     res.json({ message: "Product deleted successfully" });
   } catch (error: any) {
+    console.error("Error deleting product:", error);
     res.status(500).json({ error: error.message });
   }
 };
-
