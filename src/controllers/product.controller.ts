@@ -284,3 +284,132 @@ export const getCounts = async (req: Request, res: Response): Promise<any> => {
   }
 };
 
+const sheets = google.sheets({ version: "v4", auth: authClient })
+
+export const addProduct = async (req: Request, res: Response) => {
+  try {
+    const sheetName = (req.body.sheetName as string) || "Sheet1";
+    const product = req.body;
+
+    if (!product.name || !product.price || !product.link) {
+      return res.status(400).json({ message: "Missing required fields" });
+    }
+
+    const range = `${sheetName}!A:G`; // Chèn dữ liệu vào cột A đến G
+
+    await sheets.spreadsheets.values.append({
+      spreadsheetId: SHEET_ID,
+      range,
+      valueInputOption: "USER_ENTERED",
+      requestBody: {
+        values: [
+          [
+            product.name,
+            product.price,
+            product.link,
+            product.commission || "",
+            product.sales || "",
+            product.shop || "",
+            product.img || "",
+          ],
+        ],
+      },
+    });
+
+    res.status(201).json({ message: "Product added successfully" });
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+// Sửa sản phẩm
+export const updateProduct = async (req: Request, res: Response) => {
+  try {
+    const sheetName = (req.body.sheetName as string) || "Sheet1";
+    const productId = req.params.id;
+    const updatedData = req.body;
+
+    const range = `${sheetName}!A2:G`; // Dữ liệu bắt đầu từ dòng 2
+    const sheetResponse = await sheets.spreadsheets.values.get({
+      spreadsheetId: SHEET_ID,
+      range,
+    });
+
+    if (!sheetResponse.data.values) {
+      return res.status(404).json({ message: "No data found" });
+    }
+
+    const rows = sheetResponse.data.values;
+    const rowIndex = rows.findIndex((row: any) =>
+      removeHttps(row[2]) === productId
+    );
+
+    if (rowIndex === -1) {
+      return res.status(404).json({ message: "Product not found" });
+    }
+
+    const updatedRow = [
+      updatedData.name || rows[rowIndex][0],
+      updatedData.price || rows[rowIndex][1],
+      updatedData.link || rows[rowIndex][2],
+      updatedData.commission || rows[rowIndex][3],
+      updatedData.sales || rows[rowIndex][4],
+      updatedData.shop || rows[rowIndex][5],
+      updatedData.img || rows[rowIndex][6],
+    ];
+
+    const updateRange = `${sheetName}!A${rowIndex + 2}:G${rowIndex + 2}`;
+
+    await sheets.spreadsheets.values.update({
+      spreadsheetId: SHEET_ID,
+      range: updateRange,
+      valueInputOption: "USER_ENTERED",
+      requestBody: { values: [updatedRow] },
+    });
+
+    res.json({ message: "Product updated successfully" });
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+// Xóa sản phẩm
+export const deleteProduct = async (req: Request, res: Response) => {
+  try {
+    const sheetName = (req.query.sheetName as string) || "Sheet1";
+    const productId = req.params.id;
+
+    const range = `${sheetName}!A2:G`; // Dữ liệu bắt đầu từ dòng 2
+    const sheetResponse = await sheets.spreadsheets.values.get({
+      spreadsheetId: SHEET_ID,
+      range,
+    });
+
+    if (!sheetResponse.data.values) {
+      return res.status(404).json({ message: "No data found" });
+    }
+
+    const rows = sheetResponse.data.values;
+    const rowIndex = rows.findIndex((row: any) =>
+      removeHttps(row[2]) === productId
+    );
+
+    if (rowIndex === -1) {
+      return res.status(404).json({ message: "Product not found" });
+    }
+
+    rows.splice(rowIndex, 1);
+
+    await sheets.spreadsheets.values.update({
+      spreadsheetId: SHEET_ID,
+      range: `${sheetName}!A2:G`,
+      valueInputOption: "USER_ENTERED",
+      requestBody: { values: rows },
+    });
+
+    res.json({ message: "Product deleted successfully" });
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+};
+

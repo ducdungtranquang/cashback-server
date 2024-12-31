@@ -1,6 +1,7 @@
 import { Request, Response } from "express";
 import User from "../models/user.model";
 import jwt from "jsonwebtoken";
+import validator from "validator";
 import { sendResetPasswordEmail } from "../ultils/sendEmail";
 
 export const getUserProfile = async (req: Request, res: Response) => {
@@ -20,9 +21,8 @@ export const getUserProfile = async (req: Request, res: Response) => {
 
 export const getAllUserProfile = async (req: Request, res: Response) => {
   try {
-    const userRole = await User.findById((req.user as any)._id).select("role");
-    if (!(userRole as any)?.role) {
-      return res.status(403).json({ message: "User not found" });
+    if (!req.user || (req.user as any).role <= 0) {
+      return res.status(403).json({ error: "Forbidden: Insufficient role" });
     }
 
     const { email, sortBy, order = "asc" } = req.query;
@@ -37,7 +37,9 @@ export const getAllUserProfile = async (req: Request, res: Response) => {
     const sortOrder = order === "desc" ? -1 : 1;
 
     const users = await User.find(filter)
-      .select("-password -verificationRequestsCount -lastVerificationRequest")
+      .select(
+        "-password -verificationRequestsCount -lastVerificationRequest -_v -spinToken -trees"
+      )
       .sort(sortField ? { [sortField]: sortOrder } : {});
 
     if (!users || users.length === 0) {
@@ -54,6 +56,10 @@ export const getAllUserProfile = async (req: Request, res: Response) => {
 export const updateUserProfile = async (req: Request, res: Response) => {
   try {
     const user = await User.findById((req.user as any)._id);
+
+    if (!validator.isEmail(req.body.email)) {
+      return res.status(400).json({ message: "Invalid email format." });
+    }
 
     if (!user) {
       return res.status(403).json({ message: "User not found" });
@@ -167,13 +173,8 @@ export const resetPassword = async (req: Request, res: Response) => {
 
 export const updateUser = async (req: Request, res: Response) => {
   try {
-    const currentUser = await User.findById((req.user as any)._id).select(
-      "role"
-    );
-    if (!currentUser || currentUser.role === 0) {
-      return res
-        .status(403)
-        .json({ message: "You do not have permission to update users." });
+    if (!req.user || (req.user as any).role <= 0) {
+      return res.status(403).json({ error: "Forbidden: Insufficient role" });
     }
 
     const { userId } = req.params;
@@ -208,13 +209,8 @@ export const updateUser = async (req: Request, res: Response) => {
 
 export const deleteUser = async (req: Request, res: Response) => {
   try {
-    const currentUser = await User.findById((req.user as any)._id).select(
-      "role"
-    );
-    if (!currentUser || currentUser.role === 0) {
-      return res
-        .status(403)
-        .json({ message: "You do not have permission to delete users." });
+    if (!req.user || (req.user as any).role <= 0) {
+      return res.status(403).json({ error: "Forbidden: Insufficient role" });
     }
 
     const { userId } = req.params;
@@ -234,13 +230,8 @@ export const deleteUser = async (req: Request, res: Response) => {
 
 export const createUser = async (req: Request, res: Response) => {
   try {
-    const currentUser = await User.findById((req.user as any)._id).select(
-      "role"
-    );
-    if (!currentUser || currentUser.role === 0) {
-      return res
-        .status(403)
-        .json({ message: "You do not have permission to add users." });
+    if (!req.user || (req.user as any).role <= 0) {
+      return res.status(403).json({ error: "Forbidden: Insufficient role" });
     }
 
     const {
@@ -253,6 +244,10 @@ export const createUser = async (req: Request, res: Response) => {
       bankName,
       accountBank,
     } = req.body;
+
+    if (!validator.isEmail(email)) {
+      return res.status(400).json({ message: "Invalid email format." });
+    }
 
     const existingUser = await User.findOne({ email });
     if (existingUser) {
@@ -268,6 +263,7 @@ export const createUser = async (req: Request, res: Response) => {
       address,
       bankName,
       accountBank,
+      isVerify: true,
     });
 
     await newUser.save();

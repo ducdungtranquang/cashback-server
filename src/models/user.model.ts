@@ -5,7 +5,6 @@ import { ITree, TreeSchema } from "./tree.model";
 export interface IUser extends Document {
   name: string;
   email: string;
-  age?: number;
   password?: string;
   accountBank?: string;
   bankName?: string;
@@ -45,7 +44,6 @@ const UserSchema: Schema = new Schema(
     phoneNumber: { type: String, unique: true },
     address: { type: String },
     city: { type: String },
-    age: { type: Number },
     inviteCode: { type: String },
     image: { type: String, default: null },
     money: { type: Number, default: 0 },

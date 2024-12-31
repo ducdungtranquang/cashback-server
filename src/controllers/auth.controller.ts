@@ -3,6 +3,7 @@ import User from "../models/user.model";
 import generateToken from "../ultils/generateToken";
 import jwt from "jsonwebtoken";
 import BlacklistToken from "../models/blackList.model";
+import validator from "validator";
 import { sendVerificationEmail } from "../ultils/sendEmail";
 
 export const verifyToken = async (req: Request, res: Response) => {
@@ -36,6 +37,10 @@ export const registerUser = async (req: Request, res: Response) => {
       return res.status(400).json({
         message: "Please provide all required fields: email, password, name.",
       });
+    }
+
+    if (!validator.isEmail(email)) {
+      return res.status(400).json({ message: "Invalid email format." });
     }
 
     const userExists = await User.findOne({ email });
