@@ -10,6 +10,7 @@ interface ICart extends Document {
   createdAt?: Date;
   updatedAt?: Date;
   productId: string;
+  productImg?: string;
 }
 
 const CartSchema = new Schema<ICart>(
@@ -32,6 +33,10 @@ const CartSchema = new Schema<ICart>(
       required: true,
     },
     productLink: {
+      type: String,
+      required: true,
+    },
+    productImg: {
       type: String,
       required: true,
     },

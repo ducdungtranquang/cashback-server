@@ -80,21 +80,13 @@ export const verifyWithdraw = async (req: Request, res: Response) => {
 
 export const getAllWithdrawRequests = async (req: Request, res: Response) => {
   try {
-    const currentUser = await User.findById((req.user as any)._id).select(
-      "role"
-    );
-
-    if (!currentUser) {
-      return res.status(404).json({ message: "User not found" });
-    }
-
-    if (currentUser.role === 0) {
-      return res.status(403).json({ message: "Permission denied" });
+    if (!req.user || (req.user as any).role <= 0) {
+      return res.status(403).json({ error: "Forbidden: Insufficient role" });
     }
 
     const { search } = req.query;
 
-    let filter: any = {};
+    let filter: any = { isVerify: true };
     if (search) {
       const users = await User.find({
         $or: [
@@ -121,23 +113,23 @@ export const getAllWithdrawRequests = async (req: Request, res: Response) => {
 
 export const approveWithdrawRequest = async (req: Request, res: Response) => {
   try {
-    const { requestId } = req.params;
+    const { id } = req.params;
     const { status } = req.body;
+
+    if (!req.user || (req.user as any).role <= 0) {
+      return res.status(403).json({ error: "Forbidden: Insufficient role" });
+    }
 
     const currentUser = await User.findById((req.user as any)._id);
     if (!currentUser) {
       return res.status(404).json({ message: "User not found" });
     }
 
-    if (currentUser.role === 0) {
-      return res.status(403).json({ message: "Permission denied" });
-    }
-
     if (!["approved", "rejected"].includes(status)) {
       return res.status(400).json({ message: "Invalid status" });
     }
 
-    const withdrawRequest = await WithdrawRequest.findById(requestId);
+    const withdrawRequest = await WithdrawRequest.findById(id);
     if (!withdrawRequest) {
       return res.status(404).json({ message: "Withdraw request not found" });
     }
@@ -163,6 +155,8 @@ export const approveWithdrawRequest = async (req: Request, res: Response) => {
     if (status === "approved") {
       currentUser.total = Number(withdrawRequest.amount);
     }
+
+    await currentUser.save();
 
     res.status(200).json({
       message: `Withdraw request has been ${status} successfully`,

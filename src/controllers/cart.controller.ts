@@ -10,6 +10,7 @@ export const addToCart = async (req: Request, res: Response) => {
       cashbackPercentage,
       quantity,
       productId,
+      productImg,
     } = req.body;
 
     if (
@@ -47,6 +48,7 @@ export const addToCart = async (req: Request, res: Response) => {
         cashbackPercentage,
         quantity,
         productId,
+        productImg,
       });
 
       return res.status(201).json({
