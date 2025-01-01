@@ -8,13 +8,14 @@ import {
   verifyEmailToken,
   resendVerificationCode,
 } from "../controllers/auth.controller";
+import { protect } from "../middleware/auth";
 
 const router = Router();
 
 router.post("/register", registerUser);
 router.post("/login", authUser);
 router.post("/logout", logout);
-router.post("/verify-token", verifyToken);
+router.post("/verify-token", protect, verifyToken);
 router.post("/verify-account", verifyEmailToken);
 router.post("/resend-verify", resendVerificationCode);
 
@@ -49,8 +50,10 @@ router.get(
         password: "password",
         email: user.email,
         isAvatarImageSet: true,
-        avatarImage: `https://api.multiavatar.com/${Math.round(Math.random() * 1000)}`
-      }
+        avatarImage: `https://api.multiavatar.com/${Math.round(
+          Math.random() * 1000
+        )}`,
+      };
 
       res.redirect("http://localhost:3000/profile");
     } else {

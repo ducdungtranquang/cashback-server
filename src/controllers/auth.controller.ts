@@ -20,8 +20,12 @@ export const verifyToken = async (req: Request, res: Response) => {
       return res.status(401).json({ message: "Token is revoked" });
     }
 
+    const role = (req.user as any)?.role
+
     const decoded = jwt.verify(token, process.env.JWT_SECRET!);
-    return res.status(200).json({ valid: true, user: decoded });
+    return res
+      .status(200)
+      .json({ valid: true, user: decoded, role, });
   } catch (error) {
     return res
       .status(401)
