@@ -34,7 +34,10 @@ export const requestWithdraw = async (req: Request, res: Response) => {
       isVerify: false,
     });
 
-    await sendEmailWithdrawRequest(user.email, verificationCode);
+    await sendEmailWithdrawRequest(
+      user.email,
+      `Mã xác thực của bạn là: ${verificationCode}`
+    );
 
     res.json({ message: "Đã gửi mã xác thực qua email" });
   } catch (error) {
@@ -151,9 +154,17 @@ export const approveWithdrawRequest = async (req: Request, res: Response) => {
 
     if (status === "rejected") {
       currentUser.money = currentUser.money + withdrawRequest.amount;
+      sendEmailWithdrawRequest(
+        currentUser.email,
+        "Yêu cầu của bạn đã bị từ chối, vui lòng liên hệ nhân viên nếu cần hỗ trợ"
+      );
     }
     if (status === "approved") {
       currentUser.total = Number(withdrawRequest.amount);
+      sendEmailWithdrawRequest(
+        currentUser.email,
+        "Yêu cầu của bạn đã được chấp thuận, số tiền ${withdrawRequest.amount}Đ đã được chuyển về tài khoản ngân hàng của bạn"
+      );
     }
 
     await currentUser.save();

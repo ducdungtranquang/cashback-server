@@ -48,7 +48,7 @@ export const sendEmailWithdrawRequest = async (
     from: process.env.EMAIL_USER,
     to: email,
     subject: "Xác thực email",
-    html: `Mã xác thực của bạn là: ${verificationCode}`,
+    html: verificationCode,
   };
 
   await transporter.sendMail(mailOptions);
