@@ -20,12 +20,10 @@ export const verifyToken = async (req: Request, res: Response) => {
       return res.status(401).json({ message: "Token is revoked" });
     }
 
-    const role = (req.user as any)?.role
+    const role = (req.user as any)?.role;
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET!);
-    return res
-      .status(200)
-      .json({ valid: true, user: decoded, role, });
+    return res.status(200).json({ valid: true, user: decoded, role });
   } catch (error) {
     return res
       .status(401)
@@ -159,6 +157,24 @@ export const verifyEmailToken = async (req: Request, res: Response) => {
 
     user.isVerified = true;
     await user.save();
+
+    const data = {
+      username: user.email,
+      password: "12345678",
+      email: user.email,
+      isAvatarImageSet: true,
+      avatarImage: `https://api.multiavatar.com/${Math.round(
+        Math.random() * 1000
+      )}`,
+    };
+
+    await fetch("http://localhost:5001/api/auth/register", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json", 
+      },
+      body: JSON.stringify(data),
+    });
 
     res.status(201).json({
       _id: user._id,

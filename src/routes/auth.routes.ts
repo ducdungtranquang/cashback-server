@@ -27,7 +27,7 @@ router.get(
 router.get(
   "/google/callback",
   passport.authenticate("google", { failureRedirect: "/login" }),
-  (req, res) => {
+  async (req, res) => {
     const user = req.user as any;
 
     if (user) {
@@ -46,14 +46,22 @@ router.get(
 
       // Populate data to chat app
       const data = {
-        user: user.name,
-        password: "password",
+        username: user.email,
+        password: "12345678",
         email: user.email,
         isAvatarImageSet: true,
         avatarImage: `https://api.multiavatar.com/${Math.round(
           Math.random() * 1000
         )}`,
       };
+
+      await fetch("http://localhost:5001/api/auth/register", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json", 
+        },
+        body: JSON.stringify(data),
+      });
 
       res.redirect("http://localhost:3000/profile");
     } else {
