@@ -191,7 +191,13 @@ export const updateUser = async (req: Request, res: Response) => {
       "address",
       "bankName",
       "accountBank",
-      "role",
+      "money",
+      "total",
+      "city",
+      "image",
+      "freeSpins",
+      "email",
+      "secretBoxesCollected"
     ];
     Object.keys(updates).forEach((key) => {
       if (allowedUpdates.includes(key)) {

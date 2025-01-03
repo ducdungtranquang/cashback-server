@@ -1,10 +1,11 @@
 import { Router } from 'express';
-import { getPurchaseHistory, savePurchaseHistory } from '../controllers/purchaseHistory.controller';
+import { fetchAndSaveDataAffiliate, getPurchaseHistory, savePurchaseHistory } from '../controllers/purchaseHistory.controller';
 import { protect } from '../middleware/auth';
 
 const router = Router();
 
 router.post('/save', protect, savePurchaseHistory);
 router.get('/', protect, getPurchaseHistory);
+router.get('/admin', protect, fetchAndSaveDataAffiliate);
 
 export default router;

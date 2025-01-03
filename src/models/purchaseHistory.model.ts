@@ -1,47 +1,60 @@
-import { Schema, model, Document } from 'mongoose';
+import { Schema, model, Document } from "mongoose";
 
 interface IPurchaseHistory extends Document {
-    userId: Schema.Types.ObjectId;
-    productName: string;
-    price: number;
-    productLink: string;
-    cashbackPercentage: number;
-    quantity: number;
-    purchaseDate: Date;
+  userId: string;
+  productName: string;
+  price: number;
+  productLink: string;
+  cashbackPercentage: number;
+  quantity: number;
+  purchaseDate: Date;
+  status: "Đang xử lý" | "Đã duyệt" | "Hủy";
+  transaction_id: string;
 }
 
 const PurchaseHistorySchema = new Schema<IPurchaseHistory>({
-    userId: {
-        type: Schema.Types.ObjectId,
-        ref: 'User',
-        required: true,
-    },
-    productName: {
-        type: String,
-        required: true,
-    },
-    price: {
-        type: Number,
-        required: true,
-    },
-    productLink: {
-        type: String,
-        required: true,
-    },
-    cashbackPercentage: {
-        type: Number,
-        required: true,
-    },
-    quantity: {
-        type: Number,
-        required: true,
-    },
-    purchaseDate: {
-        type: Date,
-        default: Date.now,
-    },
+  userId: {
+    type: String,
+    required: true,
+  },
+  productName: {
+    type: String,
+    required: true,
+  },
+  price: {
+    type: Number,
+    required: true,
+  },
+  productLink: {
+    type: String,
+    required: true,
+  },
+  cashbackPercentage: {
+    type: Number,
+    required: true,
+  },
+  quantity: {
+    type: Number,
+    required: true,
+  },
+  purchaseDate: {
+    type: Date,
+    default: Date.now,
+  },
+  status: {
+    type: String,
+    required: true,
+    default: "Đang xử lý",
+  },
+  transaction_id: {
+    type: String,
+    required: true,
+  },
 });
 
-const PurchaseHistory = model<IPurchaseHistory>('PurchaseHistory', PurchaseHistorySchema);
+const PurchaseHistory = model<IPurchaseHistory>(
+  "PurchaseHistory",
+  PurchaseHistorySchema
+);
 
 export default PurchaseHistory;
