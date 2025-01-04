@@ -33,7 +33,7 @@ export const getProducts = async (
   res: Response
 ): Promise<void> => {
   try {
-    const sheetName = (req.query.sheetName as string) || "All";
+    const sheetName = (req.query.sheetName as string) || "Tất cả";
     const page = parseInt(req.query.page as string) || 1;
     const limit = parseInt(req.query.limit as string) || 20;
     const searchTerm = req.query.searchTerm
@@ -69,7 +69,7 @@ export const getProducts = async (
       const matchesProduct = productName?.includes(searchTerm);
       const matchesShop = shop?.includes(shopName || searchTerm);
 
-      if (shopName) return matchesProduct && matchesShop;
+      if (shopName) return matchesShop;
       return matchesProduct || matchesShop;
     });
 
@@ -123,7 +123,7 @@ export const getProducts = async (
 
 export const getProductById = async (req: Request, res: Response) => {
   try {
-    const sheetName = (req.query.sheetName as string) || "All";
+    const sheetName = (req.query.sheetName as string) || "Tất cả";
     const productId = req.params.id;
 
     const sheets = google.sheets({ version: "v4", auth: authClient });
@@ -168,7 +168,7 @@ export const getProductById = async (req: Request, res: Response) => {
 
 export const getShops = async (req: Request, res: Response): Promise<void> => {
   try {
-    const sheetName = (req.query.sheetName as string) || "All";
+    const sheetName = (req.query.sheetName as string) || "Tất cả";
     const page = parseInt(req.query.page as string) || 1;
     const limit = parseInt(req.query.limit as string) || 20;
     const searchTerm = req.query.searchTerm
@@ -243,7 +243,7 @@ export const getCounts = async (req: Request, res: Response): Promise<any> => {
       return res.status(403).json({ error: "Forbidden: Insufficient role" });
     }
 
-    const sheetName = (req.query.sheetName as string) || "All";
+    const sheetName = (req.query.sheetName as string) || "Tất cả";
 
     const sheets = google.sheets({ version: "v4", auth: authClient });
 
@@ -288,7 +288,7 @@ const sheets = google.sheets({ version: "v4", auth: authClient });
 
 export const addProduct = async (req: Request, res: Response) => {
   try {
-    const sheetName = (req.body.sheetName as string) || "All";
+    const sheetName = (req.body.sheetName as string) || "Tất cả";
     const product = req.body;
 
     if (!product.name || !product.price || !product.link) {
@@ -324,7 +324,7 @@ export const addProduct = async (req: Request, res: Response) => {
 
 export const updateProduct = async (req: Request, res: Response) => {
   try {
-    const sheetName = (req.body.sheetName as string) || "All";
+    const sheetName = (req.body.sheetName as string) || "Tất cả";
     const productId = req.params.id;
     const updatedData = req.body;
 
@@ -374,7 +374,7 @@ export const updateProduct = async (req: Request, res: Response) => {
 
 export const deleteProduct = async (req: Request, res: Response) => {
   try {
-    const sheetName = (req.query.sheetName as string) || "All";
+    const sheetName = (req.query.sheetName as string) || "Tất cả";
     const productId = req.params.id;
 
     const range = `${sheetName}!A2:G`;

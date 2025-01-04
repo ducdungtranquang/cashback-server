@@ -135,12 +135,12 @@ export const forgotPassword = async (req: Request, res: Response) => {
     }
 
     const resetToken = jwt.sign({ id: user._id }, process.env.JWT_SECRET!, {
-      expiresIn: "1h",
+      expiresIn: "10m",
     });
 
     await sendResetPasswordEmail(user.email, resetToken);
 
-    res.status(200).json({ message: "Reset password email sent" });
+    res.status(200).json({ message: "Reset password email sent successfully" });
   } catch (error) {
     console.error("Error sending reset password email:", error);
     res.status(500).json({ message: "Server error, please try again later." });

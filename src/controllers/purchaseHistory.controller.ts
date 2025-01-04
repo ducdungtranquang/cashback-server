@@ -121,12 +121,14 @@ const saveToDatabase = async (data: APIData[]) => {
       });
 
       if (!existingRecord) {
+        const user = await User.findById(item.utm_source);
         const newRecord = new PurchaseHistory({
           userId: item.utm_source,
           productName: item.merchant,
           price: item.transaction_value,
           productLink: item.click_url,
           cashbackPercentage: 0,
+          cashback: item.commission,
           quantity: item.product_quantity,
           purchaseDate: new Date(item.transaction_time),
           transaction_id: item.transaction_id,
@@ -138,6 +140,10 @@ const saveToDatabase = async (data: APIData[]) => {
               : "Hủy",
         });
         await newRecord.save();
+        if (user) {
+          user.money! += item.commission;
+          await user.save();
+        }
       }
     }
   }

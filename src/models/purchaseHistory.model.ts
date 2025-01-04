@@ -6,6 +6,7 @@ interface IPurchaseHistory extends Document {
   price: number;
   productLink: string;
   cashbackPercentage: number;
+  cashback: number;
   quantity: number;
   purchaseDate: Date;
   status: "Đang xử lý" | "Đã duyệt" | "Hủy";
@@ -36,6 +37,10 @@ const PurchaseHistorySchema = new Schema<IPurchaseHistory>({
   quantity: {
     type: Number,
     required: true,
+  },
+  cashback: {
+    type: Number,
+    default: 0,
   },
   purchaseDate: {
     type: Date,
