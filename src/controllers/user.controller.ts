@@ -197,7 +197,7 @@ export const updateUser = async (req: Request, res: Response) => {
       "image",
       "freeSpins",
       "email",
-      "secretBoxesCollected"
+      "secretBoxesCollected",
     ];
     Object.keys(updates).forEach((key) => {
       if (allowedUpdates.includes(key)) {
@@ -221,9 +221,17 @@ export const deleteUser = async (req: Request, res: Response) => {
 
     const { userId } = req.params;
 
+    if ((req.user as any)._id === userId) {
+      return res.status(404).json({ message: "Error deleting user" });
+    }
+
     const user = await User.findById(userId);
     if (!user) {
       return res.status(404).json({ message: "User not found." });
+    }
+
+    if(user.role! > 1){
+      return res.status(404).json({ message: "Error deleting user" });
     }
 
     await user.deleteOne();

@@ -6,6 +6,6 @@ const router = Router();
 
 router.post('/save', protect, savePurchaseHistory);
 router.get('/', protect, getPurchaseHistory);
-router.get('/admin', protect, fetchAndSaveDataAffiliate);
+router.post('/admin', protect, fetchAndSaveDataAffiliate);
 
 export default router;

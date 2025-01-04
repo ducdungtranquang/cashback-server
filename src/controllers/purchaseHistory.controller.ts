@@ -1,5 +1,6 @@
 import { Request, Response } from "express";
 import PurchaseHistory from "../models/purchaseHistory.model";
+import User from "../models/user.model";
 import { extractId } from "../ultils/func";
 
 export const savePurchaseHistory = async (req: Request, res: Response) => {
@@ -82,17 +83,33 @@ interface APIResponse {
   data: APIData[];
 }
 
-const fetchDataFromAPI = async (): Promise<APIResponse> => {
-  const apiUrl =
-    "https://api.accesstrade.vn/v1/transactions?since=2021-01-01T00:00:00Z&until=2025-01-03T00";
+const fetchDataFromAPI = async (params: {
+  utm_source?: string;
+  merchant?: string;
+  limit?: number;
+  status?: number;
+}): Promise<APIResponse> => {
+  const { utm_source, merchant, limit, status } = params;
+
+  // Xây dựng URL với các tham số
+  let apiUrl = "https://api.accesstrade.vn/v1/transactions?";
+  apiUrl += `since=2021-01-01T00:00:00Z&until=2026-01-03T00`;
+  if (utm_source) apiUrl += `&utm_source=${utm_source}`;
+  if (merchant) apiUrl += `&merchant=${merchant}`;
+  if (limit) apiUrl += `&limit=${limit}`;
+  if (status !== undefined) apiUrl += `&status=${status}`;
+
   const response = await fetch(apiUrl, {
     headers: {
       Authorization: "Token b2YarfQvCZooDdHSNMIJoQYwawTP_cqY",
     },
   });
+
   if (!response.ok) {
-    console.log("response", response);
+    console.error("API call failed", response.statusText);
+    throw new Error("Failed to fetch data from API");
   }
+
   return response.json();
 };
 
@@ -102,7 +119,8 @@ const saveToDatabase = async (data: APIData[]) => {
       const existingRecord = await PurchaseHistory.findOne({
         transaction_id: item.transaction_id,
       });
-      if (!existingRecord && item.utm_source) {
+
+      if (!existingRecord) {
         const newRecord = new PurchaseHistory({
           userId: item.utm_source,
           productName: item.merchant,
@@ -133,7 +151,29 @@ export const fetchAndSaveDataAffiliate = async (
     if (!req.user || (req.user as any).role <= 0) {
       return res.status(403).json({ error: "Forbidden: Insufficient role" });
     }
-    const apiResponse = await fetchDataFromAPI();
+
+    const { utm_source, merchant, limit, status } = req.body;
+    const apiResponse = await fetchDataFromAPI({
+      utm_source: utm_source && `j:"${utm_source}"`,
+      merchant,
+      limit,
+      status,
+    });
+
+    const userData = await Promise.all(
+      apiResponse.data.map(async (item) => {
+        const userId = extractId(item.utm_source);
+        const user = userId
+          ? await User.findById(userId).select("name email")
+          : null;
+
+        return {
+          ...item,
+          userName: user?.name || "Không xác định",
+          email: user?.email || "Không xác định",
+        };
+      })
+    );
 
     const transformedData = apiResponse.data.map((item) => ({
       merchant: item.merchant,
@@ -153,7 +193,7 @@ export const fetchAndSaveDataAffiliate = async (
 
     res.status(200).json({
       total: apiResponse.total,
-      data: apiResponse.data,
+      userData: userData,
     });
   } catch (error) {
     console.error("Error fetching, transforming, or saving data:", error);

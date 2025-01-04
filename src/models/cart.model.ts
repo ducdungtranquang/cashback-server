@@ -38,11 +38,9 @@ const CartSchema = new Schema<ICart>(
     },
     productImg: {
       type: String,
-      required: true,
     },
     cashbackPercentage: {
       type: Number,
-      required: true,
     },
     quantity: {
       type: Number,
