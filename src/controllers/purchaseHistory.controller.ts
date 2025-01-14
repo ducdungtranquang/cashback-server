@@ -91,7 +91,6 @@ const fetchDataFromAPI = async (params: {
 }): Promise<APIResponse> => {
   const { utm_source, merchant, limit, status } = params;
 
-  // Xây dựng URL với các tham số
   let apiUrl = "https://api.accesstrade.vn/v1/transactions?";
   apiUrl += `since=2021-01-01T00:00:00Z&until=2026-01-03T00`;
   if (utm_source) apiUrl += `&utm_source=${utm_source}`;

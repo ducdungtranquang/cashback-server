@@ -1,6 +1,7 @@
 import { Request, Response } from "express";
 import User from "../models/user.model";
 import { WithdrawRequest } from "../models/withdrawRequest";
+import WithdrawHistory from "../models/withdrawHistory.model";
 import { getRandomInt } from "../ultils/func";
 import { sendEmailWithdrawRequest } from "../ultils/sendEmail";
 
@@ -160,10 +161,17 @@ export const approveWithdrawRequest = async (req: Request, res: Response) => {
       );
     }
     if (status === "approved") {
-      currentUser.total = Number(withdrawRequest.amount);
+      currentUser.total += Number(withdrawRequest.amount);
+      await WithdrawHistory.create({
+        userId: currentUser.id,
+        bank: currentUser.bankName,
+        money: withdrawRequest.amount,
+        accountBank: currentUser.accountBank,
+        transId: withdrawRequest._id,
+      });
       sendEmailWithdrawRequest(
         currentUser.email,
-        "Yêu cầu của bạn đã được chấp thuận, số tiền ${withdrawRequest.amount}Đ đã được chuyển về tài khoản ngân hàng của bạn"
+        `Yêu cầu của bạn đã được chấp thuận, số tiền ${withdrawRequest.amount}Đ đã được chuyển về tài khoản ngân hàng của bạn`
       );
     }
 

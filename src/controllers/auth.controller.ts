@@ -168,13 +168,17 @@ export const verifyEmailToken = async (req: Request, res: Response) => {
       )}`,
     };
 
-    await fetch("http://localhost:5001/api/auth/register", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json", 
-      },
-      body: JSON.stringify(data),
-    });
+    try {
+      await fetch("http://localhost:5001/api/auth/register", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(data),
+      });
+    } catch (error) {
+      console.log("error", error);
+    }
 
     res.status(201).json({
       _id: user._id,

@@ -55,13 +55,17 @@ router.get(
         )}`,
       };
 
-      await fetch("http://localhost:5001/api/auth/register", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json", 
-        },
-        body: JSON.stringify(data),
-      });
+      try {
+        await fetch("http://localhost:5001/api/auth/register", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(data),
+        });
+      } catch (error) {
+        console.log("error", error);
+      }
 
       res.redirect("http://localhost:3000/profile");
     } else {
