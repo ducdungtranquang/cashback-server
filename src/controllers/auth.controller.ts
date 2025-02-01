@@ -4,7 +4,11 @@ import generateToken from "../ultils/generateToken";
 import jwt from "jsonwebtoken";
 import BlacklistToken from "../models/blackList.model";
 import validator from "validator";
-import { sendVerificationEmail } from "../ultils/sendEmail";
+import {
+  sendEmailWithdrawRequest,
+  sendVerificationEmail,
+} from "../ultils/sendEmail";
+import { getRandomInt } from "../ultils/func";
 
 export const verifyToken = async (req: Request, res: Response) => {
   const token = req.body.token;
@@ -50,26 +54,29 @@ export const registerUser = async (req: Request, res: Response) => {
       return res.status(400).json({ message: "User already exists" });
     }
 
+    const verificationCode = getRandomInt(1000000).toString();
+
     const user = await User.create({
       email,
       password,
       name,
       accountBank,
       isVerified: false,
+      verificationCode: verificationCode,
+      verificationExpires: new Date(Date.now() + 15 * 60 * 1000),
     });
 
     if (user) {
-      const verificationToken = jwt.sign(
-        { userId: user._id },
-        process.env.JWT_SECRET!,
-        { expiresIn: "1d" }
+      await sendEmailWithdrawRequest(
+        user.email,
+        `Mã xác thực của bạn là: ${verificationCode}`
       );
 
-      await sendVerificationEmail(email, verificationToken);
-
+      console.log("verificationCode", verificationCode);
       res.status(201).json({
         success: true,
-        message: "User registered. Please verify your email to log in.",
+        message:
+          "User registered. Please check your email for the verification code.",
       });
     } else {
       res.status(400).json({ message: "Invalid user data" });
@@ -94,14 +101,23 @@ export const authUser = async (req: Request, res: Response) => {
 
     if (user && (await user.comparePassword!(password))) {
       if (!user.isVerified) {
-        return res
-          .status(401)
-          .json({ message: "Please verify your email first." });
+        const verificationCode = getRandomInt(1000000).toString();
+
+        user.verificationCode = verificationCode;
+        user.verificationExpires = new Date(Date.now() + 15 * 60 * 1000);
+        await user.save();
+
+        return res.status(401).json({
+          message: "Please verify your email first.",
+          isVerified: false,
+        });
       }
 
       res.json({
         _id: user._id,
         email: user.email,
+        name: user.name,
+        isVerified: true,
         token: generateToken(user._id as string),
       });
     } else {
@@ -137,54 +153,40 @@ export const logout = async (req: Request, res: Response) => {
 };
 
 export const verifyEmailToken = async (req: Request, res: Response) => {
-  const { token } = req.body;
-
-  if (!token) {
-    return res.status(400).json({ message: "Verification token is required." });
-  }
-
   try {
-    const decoded: any = jwt.verify(token as string, process.env.JWT_SECRET!);
+    const { email, code } = req.body;
 
-    const user = await User.findById(decoded.userId);
-    if (!user) {
-      return res.status(400).json({ message: "Invalid verification token." });
+    const user = await User.findOne({ email });
+
+    if (!user || !user.verificationCode) {
+      return res.status(400).json({ message: "Invalid request." });
     }
 
-    if (user.isVerified) {
-      return res.status(400).json({ message: "User already registered" });
+    if (user.verificationExpires && user.verificationExpires < new Date()) {
+      return res
+        .status(400)
+        .json({ message: "Verification code has expired." });
+    }
+
+    if (user.verificationCode !== code) {
+      return res.status(400).json({ message: "Invalid verification code." });
     }
 
     user.isVerified = true;
+    user.verificationCode = undefined;
+    user.verificationExpires = undefined;
     await user.save();
-
-    const data = {
-      username: user.email,
-      password: "12345678",
-      email: user.email,
-      isAvatarImageSet: true,
-      avatarImage: `https://api.multiavatar.com/${Math.round(
-        Math.random() * 1000
-      )}`,
-    };
-
-    await fetch("http://localhost:5001/api/auth/register", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json", 
-      },
-      body: JSON.stringify(data),
-    });
 
     res.status(201).json({
       _id: user._id,
       email: user.email,
       name: user.name,
       accountBank: user.accountBank,
+      isVerified: true,
       token: generateToken(user._id as string),
     });
   } catch (error) {
-    res.status(400).json({ message: "Invalid or expired token." });
+    res.status(500).json({ message: "Server error, please try again later." });
   }
 };
 
