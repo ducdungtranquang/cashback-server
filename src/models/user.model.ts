@@ -32,6 +32,7 @@ export interface IUser extends Document {
   };
   verificationCode?: string;
   verificationExpires?: Date;
+  lastVerificationRequestAccount?: Date;
   comparePassword?(candidatePassword: string): Promise<boolean>;
 }
 
@@ -66,6 +67,10 @@ const UserSchema: Schema = new Schema(
       default: 0,
     },
     lastVerificationRequest: {
+      type: Date,
+      default: null,
+    },
+    lastVerificationRequestAccount: {
       type: Date,
       default: null,
     },

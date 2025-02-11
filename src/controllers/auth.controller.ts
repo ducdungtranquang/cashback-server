@@ -55,6 +55,7 @@ export const registerUser = async (req: Request, res: Response) => {
     }
 
     const verificationCode = getRandomInt(1000000).toString();
+    const now = new Date();
 
     const user = await User.create({
       email,
@@ -64,6 +65,7 @@ export const registerUser = async (req: Request, res: Response) => {
       isVerified: false,
       verificationCode: verificationCode,
       verificationExpires: new Date(Date.now() + 15 * 60 * 1000),
+      lastVerificationRequestAccount: now,
     });
 
     if (user) {
@@ -102,14 +104,30 @@ export const authUser = async (req: Request, res: Response) => {
     if (user && (await user.comparePassword!(password))) {
       if (!user.isVerified) {
         const verificationCode = getRandomInt(1000000).toString();
+        const now = new Date();
+
+        const lastRequest = user.lastVerificationRequest
+          ? new Date(user.lastVerificationRequest)
+          : new Date(0);
+
+        if (now.getTime() - lastRequest.getTime() < 60 * 1000) {
+          return res
+            .status(429)
+            .json({
+              message: "Vui lòng chờ 1 phút trước khi gửi lại.",
+              status: "pending",
+              isVerified: false,
+            });
+        }
 
         user.verificationCode = verificationCode;
         user.verificationExpires = new Date(Date.now() + 15 * 60 * 1000);
-        await user.save();
+        (user.lastVerificationRequestAccount = now), await user.save();
 
         return res.status(401).json({
-          message: "Please verify your email first.",
+          message: "Xác thực email của bạn trước",
           isVerified: false,
+          status: "sent",
         });
       }
 
@@ -193,43 +211,38 @@ export const verifyEmailToken = async (req: Request, res: Response) => {
 export const resendVerificationCode = async (req: Request, res: Response) => {
   try {
     const { email } = req.body;
-
     const user = await User.findOne({ email });
-    if (!user) {
-      return res.status(404).json({ message: "User not found" });
+
+    if (!user || user.isVerified) {
+      return res
+        .status(400)
+        .json({ message: "Tài khoản không hợp lệ hoặc đã xác minh." });
     }
 
     const now = new Date();
-    const isSameDay =
-      user.lastVerificationRequest &&
-      now.toDateString() ===
-        new Date(user.lastVerificationRequest).toDateString();
+    const lastRequest = user.lastVerificationRequest
+      ? new Date(user.lastVerificationRequest)
+      : new Date(0);
 
-    if (isSameDay && user?.verificationRequestsCount! >= 2) {
+    if (now.getTime() - lastRequest.getTime() < 60 * 1000) {
       return res
         .status(429)
-        .json({ message: "Daily limit reached for verification emails." });
+        .json({ message: "Vui lòng chờ 1 phút trước khi gửi lại." });
     }
 
-    if (!isSameDay) {
-      user.verificationRequestsCount = 0;
-    }
-
-    const verificationToken = jwt.sign(
-      { userId: user._id },
-      process.env.JWT_SECRET!,
-      { expiresIn: "1d" }
-    );
-
-    await sendVerificationEmail(email, verificationToken);
-
-    user.verificationRequestsCount! += 1;
+    user.verificationCode = getRandomInt(1000000).toString();
+    user.verificationExpires = new Date(now.getTime() + 15 * 60 * 1000);
     user.lastVerificationRequest = now;
     await user.save();
 
-    res.status(200).json({ message: "Verification code resent successfully." });
+    await sendEmailWithdrawRequest(
+      email,
+      `Mã xác thực của bạn là: ${user.verificationCode}`
+    );
+
+    res.status(200).json({ message: "Mã xác thực đã được gửi lại." });
   } catch (error) {
-    console.error("Error resending verification code:", error);
-    res.status(500).json({ message: "Server error, please try again later." });
+    console.error("Lỗi gửi lại mã xác thực:", error);
+    res.status(500).json({ message: "Lỗi máy chủ, thử lại sau." });
   }
 };
