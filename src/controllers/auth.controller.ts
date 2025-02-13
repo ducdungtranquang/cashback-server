@@ -64,7 +64,7 @@ export const registerUser = async (req: Request, res: Response) => {
       accountBank,
       isVerified: false,
       verificationCode: verificationCode,
-      verificationExpires: new Date(Date.now() + 15 * 60 * 1000),
+      verificationExpires: new Date(Date.now() + 2 * 60 * 1000),
       lastVerificationRequestAccount: now,
     });
 
@@ -119,7 +119,7 @@ export const authUser = async (req: Request, res: Response) => {
         }
 
         user.verificationCode = verificationCode;
-        user.verificationExpires = new Date(Date.now() + 15 * 60 * 1000);
+        user.verificationExpires = new Date(Date.now() + 2 * 60 * 1000);
         (user.lastVerificationRequestAccount = now), await user.save();
 
         return res.status(401).json({
