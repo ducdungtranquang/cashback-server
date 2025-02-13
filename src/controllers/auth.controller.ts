@@ -111,13 +111,11 @@ export const authUser = async (req: Request, res: Response) => {
           : new Date(0);
 
         if (now.getTime() - lastRequest.getTime() < 60 * 1000) {
-          return res
-            .status(429)
-            .json({
-              message: "Vui lòng chờ 1 phút trước khi gửi lại.",
-              status: "pending",
-              isVerified: false,
-            });
+          return res.status(429).json({
+            message: "Vui lòng chờ 1 phút trước khi gửi lại.",
+            status: "pending",
+            isVerified: false,
+          });
         }
 
         user.verificationCode = verificationCode;
@@ -139,7 +137,9 @@ export const authUser = async (req: Request, res: Response) => {
         token: generateToken(user._id as string),
       });
     } else {
-      res.status(401).json({ message: "Invalid email or password" });
+      res
+        .status(401)
+        .json({ message: "Invalid email or password", status: "error" });
     }
   } catch (error) {
     console.error("Error during authentication:", error);
@@ -231,7 +231,7 @@ export const resendVerificationCode = async (req: Request, res: Response) => {
     }
 
     user.verificationCode = getRandomInt(1000000).toString();
-    user.verificationExpires = new Date(now.getTime() + 15 * 60 * 1000);
+    user.verificationExpires = new Date(now.getTime() + 2 * 60 * 1000);
     user.lastVerificationRequest = now;
     await user.save();
 
