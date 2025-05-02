@@ -25,7 +25,11 @@ export const protect = async (
       const decoded = jwt.verify(token, process.env.JWT_SECRET!) as JwtPayload;
 
       // Lấy thông tin người dùng từ database và gán vào req.user
-      req.user = (await User.findById(decoded.id).select("-password")) as IUser;
+      const user = await User.findById(decoded.id).select("-password");
+
+      if (user) {
+        req.user = { id: (user as any)._id.toString(), role: user.role || 0 };
+      }
 
       next(); // Chuyển sang middleware hoặc route handler tiếp theo
     } catch (error) {

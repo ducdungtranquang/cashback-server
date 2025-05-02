@@ -21,7 +21,7 @@ export interface IUser extends Document {
   spinToken?: string;
   spinStartTime?: Date;
   secretBoxesCollected?: number;
-  isVerified?: boolean;
+  isVerified: boolean;
   verificationRequestsCount?: number;
   lastVerificationRequest?: Date;
   role?: number;

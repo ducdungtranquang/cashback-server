@@ -1,0 +1,42 @@
+version: '3.8'
+
+services:
+  server:
+    build: .
+    container_name: cashback-server
+    ports:
+      - "5002:5002"
+    env_file:
+      - .env
+    depends_on:
+      - mongo
+      - elasticsearch
+    volumes:
+      - .:/app
+      - /app/node_modules
+    restart: unless-stopped
+
+  mongo:
+    image: mongo:6
+    container_name: cashback-mongo
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo-data:/data/db
+    restart: unless-stopped
+
+  elasticsearch:
+    image: elasticsearch:7.17.9
+    container_name: cashback-elasticsearch
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+    ports:
+      - "9200:9200"
+    volumes:
+      - elastic-data:/usr/share/elasticsearch/data
+    restart: unless-stopped
+
+volumes:
+  mongo-data:
+  elastic-data:
