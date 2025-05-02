@@ -30,6 +30,9 @@ export interface IUser extends Document {
     tree: number;
     wheel: number;
   };
+  verificationCode?: string;
+  verificationExpires?: Date;
+  lastVerificationRequestAccount?: Date;
   comparePassword?(candidatePassword: string): Promise<boolean>;
 }
 
@@ -67,10 +70,16 @@ const UserSchema: Schema = new Schema(
       type: Date,
       default: null,
     },
+    lastVerificationRequestAccount: {
+      type: Date,
+      default: null,
+    },
     role: {
       type: Number,
       default: 0,
     },
+    verificationCode: { type: String },
+    verificationExpires: { type: Date },
   },
   {
     timestamps: true,

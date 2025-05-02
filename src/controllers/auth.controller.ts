@@ -4,7 +4,11 @@ import generateToken from "../ultils/generateToken";
 import jwt from "jsonwebtoken";
 import BlacklistToken from "../models/blackList.model";
 import validator from "validator";
-import { sendVerificationEmail } from "../ultils/sendEmail";
+import {
+  sendEmailWithdrawRequest,
+  sendVerificationEmail,
+} from "../ultils/sendEmail";
+import { getRandomInt } from "../ultils/func";
 
 export const verifyToken = async (req: Request, res: Response) => {
   const token = req.body.token;
@@ -50,26 +54,31 @@ export const registerUser = async (req: Request, res: Response) => {
       return res.status(400).json({ message: "User already exists" });
     }
 
+    const verificationCode = getRandomInt(1000000).toString();
+    const now = new Date();
+
     const user = await User.create({
       email,
       password,
       name,
       accountBank,
       isVerified: false,
+      verificationCode: verificationCode,
+      verificationExpires: new Date(Date.now() + 2 * 60 * 1000),
+      lastVerificationRequestAccount: now,
     });
 
     if (user) {
-      const verificationToken = jwt.sign(
-        { userId: user._id },
-        process.env.JWT_SECRET!,
-        { expiresIn: "1d" }
+      await sendEmailWithdrawRequest(
+        user.email,
+        `Mã xác thực của bạn là: ${verificationCode}`
       );
 
-      await sendVerificationEmail(email, verificationToken);
-
+      console.log("verificationCode", verificationCode);
       res.status(201).json({
         success: true,
-        message: "User registered. Please verify your email to log in.",
+        message:
+          "User registered. Please check your email for the verification code.",
       });
     } else {
       res.status(400).json({ message: "Invalid user data" });
@@ -94,18 +103,43 @@ export const authUser = async (req: Request, res: Response) => {
 
     if (user && (await user.comparePassword!(password))) {
       if (!user.isVerified) {
-        return res
-          .status(401)
-          .json({ message: "Please verify your email first." });
+        const verificationCode = getRandomInt(1000000).toString();
+        const now = new Date();
+
+        const lastRequest = user.lastVerificationRequest
+          ? new Date(user.lastVerificationRequest)
+          : new Date(0);
+
+        if (now.getTime() - lastRequest.getTime() < 60 * 1000) {
+          return res.status(429).json({
+            message: "Vui lòng chờ 1 phút trước khi gửi lại.",
+            status: "pending",
+            isVerified: false,
+          });
+        }
+
+        user.verificationCode = verificationCode;
+        user.verificationExpires = new Date(Date.now() + 2 * 60 * 1000);
+        (user.lastVerificationRequestAccount = now), await user.save();
+
+        return res.status(401).json({
+          message: "Xác thực email của bạn trước",
+          isVerified: false,
+          status: "sent",
+        });
       }
 
       res.json({
         _id: user._id,
         email: user.email,
+        name: user.name,
+        isVerified: true,
         token: generateToken(user._id as string),
       });
     } else {
-      res.status(401).json({ message: "Invalid email or password" });
+      res
+        .status(401)
+        .json({ message: "Invalid email or password", status: "error" });
     }
   } catch (error) {
     console.error("Error during authentication:", error);
@@ -137,101 +171,78 @@ export const logout = async (req: Request, res: Response) => {
 };
 
 export const verifyEmailToken = async (req: Request, res: Response) => {
-  const { token } = req.body;
-
-  if (!token) {
-    return res.status(400).json({ message: "Verification token is required." });
-  }
-
   try {
-    const decoded: any = jwt.verify(token as string, process.env.JWT_SECRET!);
+    const { email, code } = req.body;
 
-    const user = await User.findById(decoded.userId);
-    if (!user) {
-      return res.status(400).json({ message: "Invalid verification token." });
+    const user = await User.findOne({ email });
+
+    if (!user || !user.verificationCode) {
+      return res.status(400).json({ message: "Invalid request." });
     }
 
-    if (user.isVerified) {
-      return res.status(400).json({ message: "User already registered" });
+    if (user.verificationExpires && user.verificationExpires < new Date()) {
+      return res
+        .status(400)
+        .json({ message: "Verification code has expired." });
+    }
+
+    if (user.verificationCode !== code) {
+      return res.status(400).json({ message: "Invalid verification code." });
     }
 
     user.isVerified = true;
+    user.verificationCode = undefined;
+    user.verificationExpires = undefined;
     await user.save();
-
-    const data = {
-      username: user.email,
-      password: "12345678",
-      email: user.email,
-      isAvatarImageSet: true,
-      avatarImage: `https://api.multiavatar.com/${Math.round(
-        Math.random() * 1000
-      )}`,
-    };
-
-    try {
-      await fetch("http://localhost:5001/api/auth/register", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(data),
-      });
-    } catch (error) {
-      console.log("error", error);
-    }
 
     res.status(201).json({
       _id: user._id,
       email: user.email,
       name: user.name,
       accountBank: user.accountBank,
+      isVerified: true,
       token: generateToken(user._id as string),
     });
   } catch (error) {
-    res.status(400).json({ message: "Invalid or expired token." });
+    res.status(500).json({ message: "Server error, please try again later." });
   }
 };
 
 export const resendVerificationCode = async (req: Request, res: Response) => {
   try {
     const { email } = req.body;
-
     const user = await User.findOne({ email });
-    if (!user) {
-      return res.status(404).json({ message: "User not found" });
+
+    if (!user || user.isVerified) {
+      return res
+        .status(400)
+        .json({ message: "Tài khoản không hợp lệ hoặc đã xác minh." });
     }
 
     const now = new Date();
-    const isSameDay =
-      user.lastVerificationRequest &&
-      now.toDateString() ===
-        new Date(user.lastVerificationRequest).toDateString();
+    const lastRequest = user.lastVerificationRequest
+      ? new Date(user.lastVerificationRequest)
+      : new Date(0);
 
-    if (isSameDay && user?.verificationRequestsCount! >= 2) {
+    if (now.getTime() - lastRequest.getTime() < 60 * 1000) {
       return res
         .status(429)
-        .json({ message: "Daily limit reached for verification emails." });
+        .json({ message: "Vui lòng chờ 1 phút trước khi gửi lại." });
     }
 
-    if (!isSameDay) {
-      user.verificationRequestsCount = 0;
-    }
-
-    const verificationToken = jwt.sign(
-      { userId: user._id },
-      process.env.JWT_SECRET!,
-      { expiresIn: "1d" }
-    );
-
-    await sendVerificationEmail(email, verificationToken);
-
-    user.verificationRequestsCount! += 1;
+    user.verificationCode = getRandomInt(1000000).toString();
+    user.verificationExpires = new Date(now.getTime() + 2 * 60 * 1000);
     user.lastVerificationRequest = now;
     await user.save();
 
-    res.status(200).json({ message: "Verification code resent successfully." });
+    await sendEmailWithdrawRequest(
+      email,
+      `Mã xác thực của bạn là: ${user.verificationCode}`
+    );
+
+    res.status(200).json({ message: "Mã xác thực đã được gửi lại." });
   } catch (error) {
-    console.error("Error resending verification code:", error);
-    res.status(500).json({ message: "Server error, please try again later." });
+    console.error("Lỗi gửi lại mã xác thực:", error);
+    res.status(500).json({ message: "Lỗi máy chủ, thử lại sau." });
   }
 };

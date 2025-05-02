@@ -118,7 +118,7 @@ export const getAllWithdrawRequests = async (req: Request, res: Response) => {
 export const approveWithdrawRequest = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-    const { status } = req.body;
+    const { status, reason } = req.body;
 
     if (!req.user || (req.user as any).role <= 0) {
       return res.status(403).json({ error: "Forbidden: Insufficient role" });
@@ -157,7 +157,7 @@ export const approveWithdrawRequest = async (req: Request, res: Response) => {
       currentUser.money = currentUser.money + withdrawRequest.amount;
       sendEmailWithdrawRequest(
         currentUser.email,
-        "Yêu cầu của bạn đã bị từ chối, vui lòng liên hệ nhân viên nếu cần hỗ trợ"
+        `Yêu cầu của bạn đã bị từ chối do ${reason ? reason : 'không tài khoản không đạt yêu cầu'}, vui lòng liên hệ nhân viên nếu cần hỗ trợ`
       );
     }
     if (status === "approved") {
