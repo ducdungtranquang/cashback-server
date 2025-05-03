@@ -9,6 +9,7 @@ import {
   sendVerificationEmail,
 } from "../ultils/sendEmail";
 import { getRandomInt } from "../ultils/func";
+import { log } from "console";
 
 export const verifyToken = async (req: Request, res: Response) => {
   const token = req.body.token;
@@ -102,6 +103,7 @@ export const authUser = async (req: Request, res: Response) => {
     const user = await User.findOne({ email });
 
     if (user && (await user.comparePassword!(password))) {
+      console.log(user.isVerified);
       if (!user.isVerified) {
         const verificationCode = getRandomInt(1000000).toString();
         const now = new Date();

@@ -34,20 +34,20 @@ app.use(helmet());
 
 app.use(express.json());
 
-// app.use(
-//   session({
-//     secret: process.env.SESSION_SECRET!,
-//     resave: false,
-//     saveUninitialized: false,
-//     cookie: {
-//       secure: true,
-//       maxAge: 60000,
-//     },
-//     store: MongoStore.create({
-//       mongoUrl: process.env.MONGO_URI || "",
-//     }),
-//   })
-// );
+app.use(
+  session({
+    secret: process.env.SESSION_SECRET!,
+    resave: false,
+    saveUninitialized: false,
+    cookie: {
+      secure: true,
+      maxAge: 60000,
+    },
+    store: MongoStore.create({
+      mongoUrl: process.env.MONGO_URI || "",
+    }),
+  })
+);
 
 app.use(passport.initialize());
 app.use(passport.session());

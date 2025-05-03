@@ -19,8 +19,8 @@ const ShopSchema: Schema = new Schema(
   {
     name: { type: String, required: true },
     description: { type: String },
-    categories: [{ type: String, required: true }],
-    platform: { type: String, required: true },
+    categories: [{ type: String, required: true, default: "all" }],
+    platform: { type: String, required: true, default: "shopee" },
     logo: { type: String },
     url: { type: String, required: true },
     averageCashback: { type: Number, default: 0 },

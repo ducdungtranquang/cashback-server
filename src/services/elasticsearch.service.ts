@@ -63,6 +63,8 @@ class ElasticsearchService {
         updatedAt: shop.updatedAt,
       },
     });
+
+    console.log("Indexing shop:", shop.name);
   }
 
   async deleteShop(shopId: string) {
@@ -238,13 +240,15 @@ class ElasticsearchService {
       };
     }
 
-    const { body } = (await elasticsearchClient.search({
+    const body = (await elasticsearchClient.search({
       index: "products",
       body: searchBody,
-    })) as any;
+    }));
 
-    const total = body.hits.total.value;
-    const results = body.hits.hits.map((hit: any) => ({
+    console.log(body);
+
+    const total = body?.hits.total;
+    const results = body?.hits.hits.map((hit: any) => ({
       id: hit._id,
       score: hit._score,
       highlights: hit.highlight,
@@ -353,12 +357,12 @@ class ElasticsearchService {
       };
     }
 
-    const { body } = (await elasticsearchClient.search({
+    const body = (await elasticsearchClient.search({
       index: "shops",
       body: searchBody,
-    })) as any;
+    }));
 
-    const total = body.hits.total.value;
+    const total = body.hits.total;
     const results = body.hits.hits.map((hit: any) => ({
       id: hit._id,
       score: hit._score,
@@ -584,4 +588,5 @@ export const elasticsearchService = new ElasticsearchService();
 
 // Importing here to avoid circular dependency
 import { setupElasticsearch } from "../config/elasticsearch";
-import { normalizeVietnamese } from "../ultils/vietnamese-utils";
+import { normalizeVietnamese } from "../ultils/vietnamese-utils";import { log } from "console";
+

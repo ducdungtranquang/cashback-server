@@ -4,7 +4,7 @@ import dotenv from "dotenv";
 dotenv.config();
 
 const ELASTICSEARCH_URL =
-  process.env.ELASTICSEARCH_URL || "http://localhost:9200";
+  process.env.ELASTICSEARCH_URL || "http://elasticsearch:9200";
 
 export const elasticsearchClient = new Client({
   host: ELASTICSEARCH_URL,
@@ -30,6 +30,7 @@ export const setupElasticsearch = async () => {
       index: "products",
     });
     if (!productIndexExists) {
+      console.log("Index 'products' does not exist. Creating...");
       await elasticsearchClient.indices.create({
         index: "products",
         body: {
@@ -98,6 +99,7 @@ export const setupElasticsearch = async () => {
       index: "shops",
     });
     if (!shopIndexExists) {
+      console.log("Index 'shops' does not exist. Creating...");
       await elasticsearchClient.indices.create({
         index: "shops",
         body: {

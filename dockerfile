@@ -1,19 +1,13 @@
-# 1. Base image
 FROM node:18
 
-# 2. Set working directory
 WORKDIR /app
 
-# 3. Copy package files and install deps
 COPY package*.json ./
 RUN npm install
 
-# 4. Copy rest of the app
 COPY . .
 
-# 5. Build TypeScript
-RUN npm run build
+RUN npm install -g nodemon ts-node typescript
 
-# 6. Expose port and run app
 EXPOSE 5002
-CMD ["node", "dist/server.js"]
+CMD ["nodemon", "--watch", "src", "--ext", "ts,json", "--exec", "ts-node", "src/server.ts"]
