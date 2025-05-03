@@ -7,3 +7,6 @@ Dockerfile
 *.log
 *.md
 tests
+*.ts
+tsconfig.json
+src/

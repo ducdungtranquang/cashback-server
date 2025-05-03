@@ -33,6 +33,8 @@ export interface IUser extends Document {
   verificationCode?: string;
   verificationExpires?: Date;
   lastVerificationRequestAccount?: Date;
+  treeCheatExpires?: Date[];
+  wheelCheatExpires?: Date[];
   comparePassword?(candidatePassword: string): Promise<boolean>;
 }
 
@@ -80,6 +82,8 @@ const UserSchema: Schema = new Schema(
     },
     verificationCode: { type: String },
     verificationExpires: { type: Date },
+    treeCheatExpires: [{ type: Date }],
+    wheelCheatExpires: [{ type: Date }],
   },
   {
     timestamps: true,

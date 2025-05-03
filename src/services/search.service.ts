@@ -15,11 +15,17 @@ class SearchService {
     if (userId && query && query.trim()) {
       await this.saveSearchHistory(userId, query);
     }
-    
+
     // Search products
-    return elasticsearchService.searchProducts(query, filters, sort, page, limit);
+    return elasticsearchService.searchProducts(
+      query,
+      filters,
+      sort,
+      page,
+      limit
+    );
   }
-  
+
   async searchShops(
     query: string,
     userId: string | null = null,
@@ -31,30 +37,30 @@ class SearchService {
     if (userId && query && query.trim()) {
       await this.saveSearchHistory(userId, query);
     }
-    
+
     // Search shops
     return elasticsearchService.searchShops(query, filters, page, limit);
   }
-  
+
   async getSuggestions(query: string, limit = 10) {
     return elasticsearchService.getSuggestions(query, limit);
   }
-  
+
   async saveSearchHistory(userId: string, query: string) {
     // Only save non-empty queries
     if (!query.trim()) return;
-    
+
     try {
       await SearchHistory.create({
         userId: new Types.ObjectId(userId),
         query: query.trim(),
-        timestamp: new Date()
+        timestamp: new Date(),
       });
     } catch (error) {
       console.error("Error saving search history:", error);
     }
   }
-  
+
   async getSearchHistory(userId: string, limit: number = 10) {
     return SearchHistory.find({ userId: new Types.ObjectId(userId) })
       .sort({ timestamp: -1 })
@@ -62,10 +68,20 @@ class SearchService {
       .select("query timestamp")
       .lean();
   }
-  
-  async clearSearchHistory(userId: string) {
-    await SearchHistory.deleteMany({ userId: new Types.ObjectId(userId) });
-    return { success: true, message: "Search history cleared" };
+
+  async clearSearchHistory(userId: string, historyId?: string) {
+    if (historyId) {
+      // Xoá 1 item cụ thể theo ID và userId để tránh xóa nhầm
+      await SearchHistory.deleteOne({
+        _id: new Types.ObjectId(historyId),
+        userId: new Types.ObjectId(userId),
+      });
+      return { success: true, message: "Single search history entry deleted" };
+    } else {
+      // Xoá tất cả
+      await SearchHistory.deleteMany({ userId: new Types.ObjectId(userId) });
+      return { success: true, message: "All search history cleared" };
+    }
   }
 }
 

@@ -161,6 +161,7 @@ export const getSearchHistory = async (req: Request, res: Response) => {
 export const clearSearchHistory = async (req: Request, res: Response) => {
   try {
     const userId = (req.user as any)._id;
+    const { id } = req.query; // ID của lịch sử cần xoá (nếu có)
 
     if (!userId) {
       return res.status(401).json({
@@ -169,12 +170,9 @@ export const clearSearchHistory = async (req: Request, res: Response) => {
       });
     }
 
-    const result = await searchService.clearSearchHistory(userId);
+    const result = await searchService.clearSearchHistory(userId, id as string);
 
-    res.status(200).json({
-      success: true,
-      message: "Search history cleared",
-    });
+    res.status(200).json(result);
   } catch (error) {
     console.error("Error clearing search history:", error);
     res.status(500).json({

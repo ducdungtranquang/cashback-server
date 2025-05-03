@@ -13,7 +13,7 @@ const router = Router();
 // Public routes (authentication optional)
 router.get("/products", protect, searchProducts);
 router.get("/shops", protect, searchShops);
-router.get("/suggestions", getSuggestions);
+router.get("/suggestions", protect, getSuggestions);
 
 // Protected routes (authentication required)
 router.get("/history", protect, getSearchHistory);

@@ -362,8 +362,8 @@ class ElasticsearchService {
       body: searchBody,
     }));
 
-    const total = body.hits.total;
-    const results = body.hits.hits.map((hit: any) => ({
+    const total = body?.hits.total;
+    const results = body?.hits.hits.map((hit: any) => ({
       id: hit._id,
       score: hit._score,
       highlights: hit.highlight,
@@ -472,7 +472,7 @@ class ElasticsearchService {
       },
     });
 
-    const products: any = productResults.body.hits.hits.map((hit: any) => ({
+    const products: any = productResults?.hits.hits.map((hit: any) => ({
       id: hit._id,
       type: "product",
       name: hit._source.name,
@@ -482,7 +482,7 @@ class ElasticsearchService {
       category: hit._source.categories[0],
     }));
 
-    const shops = shopResults.body.hits.hits.map((hit: any) => ({
+    const shops = shopResults?.hits.hits.map((hit: any) => ({
       id: hit._id,
       type: "shop",
       name: hit._source.name,

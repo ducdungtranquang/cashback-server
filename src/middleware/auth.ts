@@ -28,7 +28,7 @@ export const protect = async (
       const user = await User.findById(decoded.id).select("-password");
 
       if (user) {
-        req.user = { id: (user as any)._id.toString(), role: user.role || 0 };
+        req.user = { _id: (user as any)._id.toString(), role: user.role || 0 };
       }
 
       next(); // Chuyển sang middleware hoặc route handler tiếp theo
